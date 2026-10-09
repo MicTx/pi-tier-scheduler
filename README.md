@@ -42,19 +42,7 @@ $ pi install git:github.com/MicTx/pi-tier-scheduler@v0.2.0
 $ pi install npm:pi-tier-scheduler
 ```
 
-### One command from a git remote
-
-If you can clone the repository over git, you can install it without a checkout:
-
-```sh
-$ pi install git:git.example.com/your-org/pi-tier-scheduler@v0.2.0
-```
-
-`git.example.com/your-org` stands for the host and path where the package is hosted or mirrored — a company Gitea, your own server, or a public fork. The `@v0.2.0` suffix pins the install to that tag: package updates reconcile the checkout but never move a pinned ref. Authentication is whatever your git already uses to clone that host; the package itself stores no secrets. Remove it the same way:
-
-```sh
-$ pi remove git:git.example.com/your-org/pi-tier-scheduler@v0.2.0
-```
+The `git:` form works from any git remote you can clone — a company Gitea, your own server, or a fork. Pin with `@<tag>`: package updates reconcile the checkout but never move a pinned ref. Authentication is whatever your git already uses to clone that host; the package itself stores no secrets. `pi remove` takes the same source.
 
 ### From a local checkout
 

@@ -42,19 +42,7 @@ $ pi install git:github.com/MicTx/pi-tier-scheduler@v0.2.0
 $ pi install npm:pi-tier-scheduler
 ```
 
-### 一条命令,从 git 远端直接装
-
-只要你能通过 git 克隆本仓库,就能免检出、直接安装:
-
-```sh
-$ pi install git:git.example.com/your-org/pi-tier-scheduler@v0.2.0
-```
-
-`git.example.com/your-org` 代指托管或镜像本包的主机与路径——公司 Gitea、自建服务、或公开 fork 都可以。`@v0.2.0` 后缀把安装钉在这个 tag 上:后续更新只核对检出内容,不会移动钉死的 ref。认证走你 git 克隆该主机时本来就用的那套凭据;本包自身不保存任何密钥。卸载同样一条命令:
-
-```sh
-$ pi remove git:git.example.com/your-org/pi-tier-scheduler@v0.2.0
-```
+`git:` 形式对任何可克隆的 git 远端都成立——公司 Gitea、自建服务或 fork 都行。用 `@<tag>` 钉版：后续更新只核对检出内容，不会移动钉死的 ref。认证走你 git 克隆该主机时本来就用的那套凭据；本包自身不保存任何密钥。`pi remove` 接同一个源。
 
 ### 从本地检出安装
 
