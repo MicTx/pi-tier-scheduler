@@ -77,7 +77,7 @@ $ pi -e ./
 
 Three steps from install to your first routed request:
 
-1. Start Pi in your project and run `/ts init` — the guided wizard (TUI) writes a valid config file listing your own models per tier. No wizard available? Copy the complete example from [Configuration](#configuration) instead.
+1. Start Pi in your project and run `/ts init` — the guided wizard (TUI) reads the models your Pi install already knows and lets you pick one per tier, no typing. No wizard available? Copy the complete example from [Configuration](#configuration) instead.
 2. Select `ts/auto` as the session model — via `/model`, `--model`, or settings; it appears like any other model.
 3. Ask for something. `/ts status` then shows which physical model answered and why.
 
@@ -157,7 +157,7 @@ One command family, registered as `/ts`:
 | `/ts use <tier>` | all | Manual override to `brain`, `pillar`, or `crowd`; selects `ts/auto` and sets the matching bias level |
 | `/ts brain` · `/ts pillar` · `/ts crowd` | all | Short aliases for `/ts use <tier>` |
 | `/ts auto` | all | Release the manual override and return to automatic routing |
-| `/ts init` | TUI | Guided first-run setup writing a valid config file |
+| `/ts init` | TUI | Guided first-run setup — pick candidates from your installed models |
 | `/ts config` | all / TUI | View the effective merged configuration in any mode; **editing is TUI-only** |
 | `/ts doctor` | all | Config validity, model availability, credential presence, router-state health, compatibility floor |
 

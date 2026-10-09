@@ -9,6 +9,8 @@ User-visible release history for `pi-tier-scheduler`. Dates are omitted until a 
 - **License** — the package is now offered under the PolyForm Noncommercial License 1.0.0; commercial use requires separate written authorization.
 - **Bilingual README** — English and 简体中文 versions, linked at the top of each file.
 - **One-command git install** — `pi install git:<host>/<owner>/pi-tier-scheduler@<tag>` installs straight from any git remote that can clone the repository, pinned to the tag; documented in the README with a verified install/remove cycle.
+- **Public channels** — GitHub mirror at `MicTx/pi-tier-scheduler` and npm publication of `pi-tier-scheduler@0.2.0` (`pi install npm:pi-tier-scheduler`); both verified end to end with isolated install/load/remove cycles.
+- **Catalog-driven setup** — `/ts init` and `/ts config` now read the models your Pi install already knows and offer them as one-keystroke picks (context window, reasoning, and credential badges on each row); manual provider/id entry remains as a fallback.
 
 ## 0.2.0 — 2026-10-09
 
