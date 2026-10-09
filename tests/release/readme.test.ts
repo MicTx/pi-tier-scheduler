@@ -30,6 +30,9 @@ const packageJson = JSON.parse(readFileSync(resolve(REPO_ROOT, "package.json"), 
   scripts: Record<string, string>;
 };
 
+/** The GitHub install form moves with the released version; tests follow it. */
+const GITHUB_INSTALL_FORM = `pi install git:github.com/MicTx/pi-tier-scheduler@v${packageJson.version}`;
+
 type Fence = { lang: string; body: string };
 
 function fencedBlocks(markdown: string): Fence[] {
@@ -92,7 +95,7 @@ describe("README shell snippets align with the real command surface", () => {
     "pi -e ./",
     // Public channels (README "Public channels"); both verified end to end
     // with isolated install/load/remove cycles before being documented.
-    "pi install git:github.com/MicTx/pi-tier-scheduler@v0.2.0",
+    "pi install git:github.com/MicTx/pi-tier-scheduler@v" + packageJson.version,
     "pi install npm:pi-tier-scheduler",
   ];
 

@@ -2,6 +2,13 @@
 
 User-visible release history for `pi-tier-scheduler`. Dates are omitted until a release is tagged; the compatibility floor of each release is verified against the Pi extension API before shipping.
 
+## 0.3.1 — 2026-10-09
+
+### Fixed
+
+- **Catalog picking everywhere in the config editor** — `/ts config`'s partial-layer editor and its replacement-list flow now offer the same one-keystroke model picks as `/ts init`; manual entry stays as the explicit fallback.
+- **Release test suite is version-dynamic** — staging and README-snippet tests derive the expected tag from `package.json`, so version bumps no longer require test edits.
+
 ## 0.3.0 — 2026-10-09
 
 ### Added

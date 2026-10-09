@@ -178,6 +178,34 @@ async function askValidatedInput(
   }
 }
 
+/**
+ * Add one candidate to a tier: catalog pick when the registry snapshot is
+ * available and has entries the tier does not hold yet; manual entry stays
+ * as the explicit fallback for models the registry does not list.
+ */
+async function addCandidate(
+  ctx: ConfigDialogsContext,
+  tier: TierName,
+  list: readonly CandidateRef[],
+): Promise<DialogFlowOutcome<CandidateRef>> {
+  const catalog = (ctx.catalog ?? []).filter(
+    (option) => !list.some((c) => c.provider === option.ref.provider && c.id === option.ref.id),
+  );
+  if (catalog.length === 0) return askCandidatePair(ctx, tier, list);
+  const manualAction = "Enter manually…";
+  const pick = await ctx.ui.select(
+    `add a candidate to ${tier} — pick a model`,
+    [...catalog.map((o) => o.label), manualAction],
+    dialogOpts(ctx),
+  );
+  if (pick === undefined) return cancelled();
+  if (pick === manualAction) return askCandidatePair(ctx, tier, list);
+  const option = catalog.find((o) => o.label === pick);
+  return option
+    ? { ok: true, value: { provider: option.ref.provider, id: option.ref.id } }
+    : askCandidatePair(ctx, tier, list);
+}
+
 /** Step 1: choose the target scope; `project` is the first option (07 §3.2). */
 export async function chooseScope(
   ctx: ConfigDialogsContext,
@@ -288,32 +316,7 @@ export async function editTierCandidates(
     if (choice === undefined) return cancelled();
     if (choice === TIER_ACTIONS.keep) return { ok: true, value: list };
     if (choice === TIER_ACTIONS.add) {
-      let candidate: DialogFlowOutcome<CandidateRef>;
-      // Catalog-driven pick when the registry snapshot is available and has
-      // entries the tier does not hold yet; manual entry stays as the
-      // explicit fallback for models the registry does not list.
-      const catalog = (ctx.catalog ?? []).filter(
-        (option) => !list.some((c) => c.provider === option.ref.provider && c.id === option.ref.id),
-      );
-      if (catalog.length > 0) {
-        const manualAction = "Enter manually…";
-        const pick = await ctx.ui.select(
-          `add a candidate to ${tier} — pick a model`,
-          [...catalog.map((o) => o.label), manualAction],
-          dialogOpts(ctx),
-        );
-        if (pick === undefined) return cancelled();
-        if (pick === manualAction) {
-          candidate = await askCandidatePair(ctx, tier, list);
-        } else {
-          const option = catalog.find((o) => o.label === pick);
-          candidate = option
-            ? { ok: true, value: { provider: option.ref.provider, id: option.ref.id } }
-            : await askCandidatePair(ctx, tier, list);
-        }
-      } else {
-        candidate = await askCandidatePair(ctx, tier, list);
-      }
+      const candidate = await addCandidate(ctx, tier, list);
       if (!candidate.ok) return candidate;
       list.push(candidate.value);
       continue;
@@ -560,7 +563,7 @@ async function askCandidateList(
     );
     if (choice === undefined) return cancelled();
     if (choice !== TIER_PARTIAL_ACTIONS.add) return { ok: true, value: list };
-    const candidate = await askCandidatePair(ctx, tier, list);
+    const candidate = await addCandidate(ctx, tier, list);
     if (!candidate.ok) return candidate;
     list.push(candidate.value);
   }
@@ -616,7 +619,7 @@ async function editTierPartial(
       continue;
     }
     if (choice === TIER_PARTIAL_ACTIONS.add) {
-      const candidate = await askCandidatePair(ctx, tier, list);
+      const candidate = await addCandidate(ctx, tier, list);
       if (!candidate.ok) return candidate;
       list.push(candidate.value);
       dirty = true;
