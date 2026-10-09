@@ -2,7 +2,7 @@
 
 User-visible release history for `pi-tier-scheduler`. Dates are omitted until a release is tagged; the compatibility floor of each release is verified against the Pi extension API before shipping.
 
-## Unreleased
+## 0.3.0 — 2026-10-09
 
 ### Added
 

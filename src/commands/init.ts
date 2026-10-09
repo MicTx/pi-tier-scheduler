@@ -10,6 +10,8 @@ import type {
 } from "../config/types";
 import type { ConfigLayerReadInput, ConfigScope, EditableConfigLayer } from "../config/layer-read";
 import { renderConfigPreview } from "../ui/config-render";
+import { buildCatalogPickList } from "../catalog/picker";
+import type { CatalogPickOption } from "../catalog/picker";
 import {
   choosePolicy,
   chooseRetry,
@@ -95,6 +97,16 @@ function effectiveBaseline(deps: ConfigCommandDependencies): LoadResult["effecti
   );
 }
 
+/** Catalog pick options from the live registry; absent on any failure (spec §2.2). */
+function catalogOf(ctx: ExtensionCommandContext): { catalog?: readonly CatalogPickOption[] } {
+  try {
+    const catalog = buildCatalogPickList(ctx.modelRegistry);
+    return catalog.length > 0 ? { catalog } : {};
+  } catch {
+    return {};
+  }
+}
+
 function dialogContextOf(
   ctx: ExtensionCommandContext,
   deps: ConfigCommandDependencies,
@@ -103,6 +115,7 @@ function dialogContextOf(
     ui: ctx.ui,
     ...(ctx.signal !== undefined ? { signal: ctx.signal } : {}),
     isClosed: () => deps.isRuntimeClosed(),
+    ...catalogOf(ctx),
   };
 }
 

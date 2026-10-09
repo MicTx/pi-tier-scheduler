@@ -1,6 +1,6 @@
 {
   "name": "pi-tier-scheduler",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Tiered model scheduling for the Pi coding agent: one virtual model routes requests across brain/pillar/crowd tiers.",
   "keywords": [
     "pi-package",

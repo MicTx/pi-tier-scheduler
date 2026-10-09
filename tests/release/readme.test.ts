@@ -90,11 +90,10 @@ describe("README shell snippets align with the real command surface", () => {
     "pi install ./",
     "pi remove ./",
     "pi -e ./",
-    // One-command git-source install documented with an illustrative host
-    // (README "One command from a git remote"); the live cycle was verified
-    // against the real remote before the form was documented.
-    "pi install git:git.example.com/your-org/pi-tier-scheduler@v0.2.0",
-    "pi remove git:git.example.com/your-org/pi-tier-scheduler@v0.2.0",
+    // Public channels (README "Public channels"); both verified end to end
+    // with isolated install/load/remove cycles before being documented.
+    "pi install git:github.com/MicTx/pi-tier-scheduler@v0.2.0",
+    "pi install npm:pi-tier-scheduler",
   ];
 
   const shellFences = fencedBlocks(readme).filter((fence) => fence.lang === "sh");

@@ -527,3 +527,92 @@ describe("/ts init — failure and reload semantics (hooks 6, 7)", () => {
     expect(runtime.revision).toBeUndefined();
   });
 });
+
+describe("/ts init — catalog-driven candidate picking", () => {
+  /** Registry face handed to the wizard's dialog-context builder. */
+  function catalogRegistry(): {
+    getModelsOfType(type: "chat"): readonly { provider: string; id: string; contextWindow?: number; reasoning?: boolean }[];
+    getProviderAuthStatus(provider: string): { configured: boolean };
+  } {
+    return {
+      getModelsOfType(type) {
+        expect(type).toBe("chat");
+        return [
+          { provider: "acme", id: "big", contextWindow: 200000, reasoning: true },
+          { provider: "beta", id: "plain", contextWindow: 8000 },
+        ];
+      },
+      getProviderAuthStatus(provider: string) {
+        return provider === "beta" ? { configured: false } : { configured: true };
+      },
+    };
+  }
+
+  it("adds a brain candidate by picking from the catalog and a pillar one via manual fallback", async () => {
+    const { deps, responses, runtime } = makeDeps();
+    const face = makeCtx([
+      { select: "project" },                            // scope
+      { select: ADD },                                  // brain menu: add
+      { select: "acme/big · 200k ctx · reasoning" },    // catalog pick
+      { select: KEEP },                                 // brain menu: done
+      { select: ADD },                                  // pillar menu: add
+      { select: "Enter manually…" },                    // catalog manual fallback
+      { input: " acme " },
+      { input: " pillar-1 " },
+      { select: KEEP },                                 // pillar menu: done
+      { select: KEEP },                                 // crowd
+      { select: "high" },
+      { confirm: false },
+      { select: "3" },
+      { select: "2" },
+      { confirm: true },
+    ]);
+    // The live surface the wizard's dialog-context builder reads.
+    (face.ctx as unknown as { modelRegistry: unknown }).modelRegistry = catalogRegistry();
+
+    await handleInit("", face.ctx, deps);
+
+    const saved = await readTarget("project");
+    expect(saved).toBeDefined();
+    const parsed = JSON.parse(saved as string) as { tiers: Record<string, { candidates: unknown[] }> };
+    expect(parsed.tiers.brain.candidates).toEqual([{ provider: "acme", id: "big" }]);
+    expect(parsed.tiers.pillar.candidates).toEqual([{ provider: "acme", id: "pillar-1" }]);
+    expect(responses.at(-1)?.message).toBe(
+      "configuration saved; effective config reloaded (scope: project, revision: 2)",
+    );
+    expect(runtime.configLoad?.effective.tiers.brain.candidates).toEqual([
+      { provider: "acme", id: "big" },
+    ]);
+  });
+
+  it("falls back to the text flow unchanged when the registry explodes", async () => {
+    const { deps, responses } = makeDeps();
+    const face = makeCtx([
+      { select: "project" },
+      { select: ADD },
+      { input: " acme " },
+      { input: " brain-1 " },
+      { select: KEEP },
+      { select: KEEP },
+      { select: KEEP },
+      { select: "medium" },
+      { confirm: true },
+      { select: "3" },
+      { select: "2" },
+      { confirm: true },
+    ]);
+    (face.ctx as unknown as { modelRegistry: unknown }).modelRegistry = {
+      getModelsOfType() {
+        throw new Error("registry exploded");
+      },
+    };
+
+    await handleInit("", face.ctx, deps);
+
+    const saved = await readTarget("project");
+    expect(saved).toBeDefined();
+    const parsed = JSON.parse(saved as string) as { tiers: Record<string, { candidates: unknown[] }> };
+    expect(parsed.tiers.brain.candidates).toEqual([{ provider: "acme", id: "brain-1" }]);
+    expect(responses.at(-1)?.severity).toBe("info");
+  });
+});

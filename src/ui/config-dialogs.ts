@@ -19,6 +19,7 @@ import type {
   ThinkingBias,
 } from "../config/types";
 import type { ConfigScope, EditableConfigLayer } from "../config/layer-read";
+import type { CatalogPickOption } from "../catalog/picker";
 import { renderConfigPreview } from "./config-render";
 
 /**
@@ -26,8 +27,8 @@ import { renderConfigPreview } from "./config-render";
  * §5.2–§5.4; F7.1 spec §2.2, F7.2 spec §2.2).
  *
  * Every function here is a pure orchestration over Pi's built-in TUI
- * dialogs: no filesystem, no model registry, no provider access, no
- * persistence. Zero `ctx.ui` calls happen outside the passed `ui` seam, so
+ * dialogs: no filesystem, no provider access, no persistence. Zero `ctx.ui`
+ * calls happen outside the passed `ui` seam, so
  * scripted fakes cover the whole module.
  *
  * Cancellation is one uniform edge: any `select`/`input` resolving
@@ -66,6 +67,13 @@ export type ConfigDialogsContext = {
   signal?: AbortSignal;
   /** Runtime-closed observation, checked between steps (07 §3.4/§5.8). */
   isClosed(): boolean;
+  /**
+   * Catalog-driven pick options read from Pi's model registry (spec:
+   * catalog-driven-candidate-picker). Absent or empty when the registry is
+   * unavailable — the ADD path then falls back to manual entry, exactly as
+   * in the 0.2.0 flow.
+   */
+  catalog?: readonly CatalogPickOption[];
 };
 
 /** Step outcome: a value, or one uniform cancellation reason. */
@@ -280,7 +288,32 @@ export async function editTierCandidates(
     if (choice === undefined) return cancelled();
     if (choice === TIER_ACTIONS.keep) return { ok: true, value: list };
     if (choice === TIER_ACTIONS.add) {
-      const candidate = await askCandidatePair(ctx, tier, list);
+      let candidate: DialogFlowOutcome<CandidateRef>;
+      // Catalog-driven pick when the registry snapshot is available and has
+      // entries the tier does not hold yet; manual entry stays as the
+      // explicit fallback for models the registry does not list.
+      const catalog = (ctx.catalog ?? []).filter(
+        (option) => !list.some((c) => c.provider === option.ref.provider && c.id === option.ref.id),
+      );
+      if (catalog.length > 0) {
+        const manualAction = "Enter manually…";
+        const pick = await ctx.ui.select(
+          `add a candidate to ${tier} — pick a model`,
+          [...catalog.map((o) => o.label), manualAction],
+          dialogOpts(ctx),
+        );
+        if (pick === undefined) return cancelled();
+        if (pick === manualAction) {
+          candidate = await askCandidatePair(ctx, tier, list);
+        } else {
+          const option = catalog.find((o) => o.label === pick);
+          candidate = option
+            ? { ok: true, value: { provider: option.ref.provider, id: option.ref.id } }
+            : await askCandidatePair(ctx, tier, list);
+        }
+      } else {
+        candidate = await askCandidatePair(ctx, tier, list);
+      }
       if (!candidate.ok) return candidate;
       list.push(candidate.value);
       continue;
