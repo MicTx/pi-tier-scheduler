@@ -1,12 +1,13 @@
 # pi-tier-scheduler
 
+[![npm](https://img.shields.io/npm/v/pi-tier-scheduler)](https://www.npmjs.com/package/pi-tier-scheduler)
 [![License: PolyForm-NC-1.0.0](https://img.shields.io/badge/License-PolyForm--NC--1.0.0-blue.svg)](LICENSE)
 [![Pi](https://img.shields.io/badge/Pi-1.0.4%2B-5f5fff.svg)](#环境要求)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933.svg)](#环境要求)
 
-[English](README.md) | **简体中文**
-
 为 Pi 编码代理做分层模型调度——一个虚拟模型,把每个请求路由到 brain/pillar/crowd 三层之一。
+
+[English](README.md) | **简体中文**
 
 只选一个虚拟模型 `ts/auto`,调度器就把每个请求送到适合这项工作的实体模型:强模型负责规划与推理,均衡模型负责实现与调试,高效模型处理轻量任务。路由确定、可解释;手动接管永远只需一条命令;所有回退都有上界。
 
@@ -21,6 +22,7 @@
 - [凭据](#凭据)
 - [故障排查](#故障排查)
 - [开发](#开发)
+- [贡献](#贡献)
 - [许可证](#许可证)
 - [更新日志](#更新日志)
 
@@ -30,12 +32,14 @@
 - Node **20 或更新**只在从检出目录跑开发检查时才需要;在 Pi 里安装并使用本包,不需要单独配置 Node。
 
 ## 安装
-### 从 GitHub
 
-本包的公开镜像在 GitHub——同样一条命令安装:
+### 公开渠道
+
+本包在 GitHub 有公开镜像、npm 有正式发布——任选其一,一条命令:
 
 ```sh
 $ pi install git:github.com/MicTx/pi-tier-scheduler@v0.2.0
+$ pi install npm:pi-tier-scheduler
 ```
 
 ### 一条命令,从 git 远端直接装
@@ -194,6 +198,10 @@ $ npm run test:coverage
 在检出的包根目录运行。
 
 `test:release` 先类型检查、再跑全量套件——发布门禁。测试套件确定且密闭:伪造的模型注册表与内存 provider、失败注入语料、配置/路由/命令/模式矩阵。验证**不发起真实网络调用、不使用真实凭据**。
+
+## 贡献
+
+欢迎到 [MicTx/pi-tier-scheduler](https://github.com/MicTx/pi-tier-scheduler) 提 issue 与 PR。提交 PR 即表示你同意贡献按本仓库的 [PolyForm Noncommercial 1.0.0](LICENSE) 条款授权。
 
 ## 许可证
 

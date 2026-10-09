@@ -1,12 +1,13 @@
 # pi-tier-scheduler
 
+[![npm](https://img.shields.io/npm/v/pi-tier-scheduler)](https://www.npmjs.com/package/pi-tier-scheduler)
 [![License: PolyForm-NC-1.0.0](https://img.shields.io/badge/License-PolyForm--NC--1.0.0-blue.svg)](LICENSE)
 [![Pi](https://img.shields.io/badge/Pi-1.0.4%2B-5f5fff.svg)](#requirements)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933.svg)](#requirements)
 
-**English** | [简体中文](README.zh-CN.md)
-
 Tiered model scheduling for the Pi coding agent — one virtual model routes every request across brain/pillar/crowd tiers.
+
+**English** | [简体中文](README.zh-CN.md)
 
 Select one virtual model — `ts/auto` — and the scheduler routes each request to the right physical model for the work at hand: strong models plan and reason, balanced models implement and debug, efficient models handle light work. Routing is deterministic and explainable, manual override is always one command away, and every fallback is bounded.
 
@@ -21,6 +22,7 @@ Select one virtual model — `ts/auto` — and the scheduler routes each request
 - [Credentials](#credentials)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
+- [Contributing](#contributing)
 - [License](#license)
 - [Changelog](#changelog)
 
@@ -30,12 +32,14 @@ Select one virtual model — `ts/auto` — and the scheduler routes each request
 - Node **20 or newer** is only needed to run the development checks from a checkout; installing and using the package inside Pi requires no separate Node setup.
 
 ## Installation
-### From GitHub
 
-The public mirror of this package lives on GitHub — install it the same one-command way:
+### Public channels
+
+The package is mirrored on GitHub and published to npm — one command from either:
 
 ```sh
 $ pi install git:github.com/MicTx/pi-tier-scheduler@v0.2.0
+$ pi install npm:pi-tier-scheduler
 ```
 
 ### One command from a git remote
@@ -194,6 +198,10 @@ $ npm run test:coverage
 Run them from the package root of your checkout.
 
 `test:release` runs typecheck plus the full suite — the release gate. The test suite is deterministic and hermetic: fake model registries and in-memory providers, a failure-injection corpus, and config/routing/command/mode matrices. Verification makes **no real network calls and uses no real credentials**.
+
+## Contributing
+
+Issues and pull requests are welcome at [MicTx/pi-tier-scheduler](https://github.com/MicTx/pi-tier-scheduler). By submitting a pull request you agree your contribution is licensed under the repository's [PolyForm Noncommercial 1.0.0](LICENSE) terms.
 
 ## License
 
