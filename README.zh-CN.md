@@ -33,13 +33,20 @@
 
 ## 安装
 
-### 公开渠道
+### 从 npm(推荐)
 
-本包在 GitHub 有公开镜像、npm 有正式发布——任选其一,一条命令:
+本包以 `pi-tier-scheduler` 发布在 npm:
+
+```sh
+$ pi install npm:pi-tier-scheduler
+```
+
+一条命令包含全部：从 npm registry 解析包、装进 Pi 的包目录、对每个新 Pi 会话注册——`pi list` 可见，`pi remove npm:pi-tier-scheduler` 卸载。npm 包页 [npmjs.com/package/pi-tier-scheduler](https://www.npmjs.com/package/pi-tier-scheduler) 镜像本 README 与版本历史。（裸 `npm install pi-tier-scheduler` 只是把文件放进项目的 `node_modules`——Pi 只加载它自己安装过的包。）
+
+### 从 GitHub
 
 ```sh
 $ pi install git:github.com/MicTx/pi-tier-scheduler@v0.2.0
-$ pi install npm:pi-tier-scheduler
 ```
 
 `git:` 形式对任何可克隆的 git 远端都成立——公司 Gitea、自建服务或 fork 都行。用 `@<tag>` 钉版：后续更新只核对检出内容，不会移动钉死的 ref。认证走你 git 克隆该主机时本来就用的那套凭据；本包自身不保存任何密钥。`pi remove` 接同一个源。

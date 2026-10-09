@@ -33,13 +33,20 @@ Select one virtual model — `ts/auto` — and the scheduler routes each request
 
 ## Installation
 
-### Public channels
+### From npm (recommended)
 
-The package is mirrored on GitHub and published to npm — one command from either:
+The package is published to npm as `pi-tier-scheduler`:
+
+```sh
+$ pi install npm:pi-tier-scheduler
+```
+
+One command, all of it: the package is resolved from the npm registry, installed under Pi's package directory, and registered for every new Pi session — `pi list` shows it, `pi remove npm:pi-tier-scheduler` uninstalls it. The npm page at [npmjs.com/package/pi-tier-scheduler](https://www.npmjs.com/package/pi-tier-scheduler) mirrors this README and the version history. (Plain `npm install pi-tier-scheduler` only drops the files into a project's `node_modules` — Pi loads packages it installed itself.)
+
+### From GitHub
 
 ```sh
 $ pi install git:github.com/MicTx/pi-tier-scheduler@v0.2.0
-$ pi install npm:pi-tier-scheduler
 ```
 
 The `git:` form works from any git remote you can clone — a company Gitea, your own server, or a fork. Pin with `@<tag>`: package updates reconcile the checkout but never move a pinned ref. Authentication is whatever your git already uses to clone that host; the package itself stores no secrets. `pi remove` takes the same source.
