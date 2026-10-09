@@ -1,0 +1,12 @@
+# Transient spec-chain flock files (runtime state, never committed)
+.spec/autoplan/chain.lock
+.spec/autorun/chain.lock
+
+# Dependencies and build artifacts
+node_modules/
+coverage/
+
+# Local scratch and logs
+temp/
+*.log
+.DS_Store

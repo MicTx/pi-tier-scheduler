@@ -1,0 +1,51 @@
+{
+  "name": "pi-tier-scheduler",
+  "version": "0.2.0",
+  "description": "Tiered model scheduling for the Pi coding agent: one virtual model routes requests across brain/pillar/crowd tiers.",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "model-routing",
+    "tiered-scheduling",
+    "llm",
+    "coding-agent"
+  ],
+  "type": "module",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:release": "npm run typecheck && npm run test",
+    "test:coverage": "vitest run --coverage"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^1.0.4",
+    "@types/node": "^22",
+    "@vitest/coverage-v8": "^3.2.7",
+    "typescript": "^5",
+    "vitest": "^3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MicTx/pi-tier-scheduler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MicTx/pi-tier-scheduler/issues"
+  },
+  "homepage": "https://github.com/MicTx/pi-tier-scheduler#readme"
+}
