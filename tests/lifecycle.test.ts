@@ -106,7 +106,7 @@ describe("extension factory — registration surface", () => {
         provider: "ts",
         id: "auto",
         name: "Auto",
-        thinkingLevels: ["low", "medium", "high"],
+        thinkingLevels: ["minimal", "low", "medium", "high", "xhigh", "max"],
         contextWindow: 128_000,
         maxTokens: 16_384,
         input: ["text", "image"],

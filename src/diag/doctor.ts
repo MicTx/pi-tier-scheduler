@@ -609,9 +609,19 @@ export function buildDoctorReport(snapshot: DoctorSnapshot): DoctorReport {
  * fields.
  */
 export function renderDoctorReport(report: DoctorReport): string {
-  const lines: string[] = ["pi-tier-scheduler doctor", `result: ${report.severity}`];
+  const labelWidth = Math.max(
+    "check".length,
+    ...report.checks.map((finding) => (CHECK_LABELS[finding.code] ?? finding.code).length),
+  );
+  const lines: string[] = [
+    "pi-tier-scheduler doctor",
+    `result: ${report.severity}`,
+    "",
+    `${"check".padEnd(labelWidth)}  status    summary`,
+  ];
   for (const finding of report.checks) {
-    lines.push(`${CHECK_LABELS[finding.code] ?? finding.code}: ${finding.severity} (${finding.summary})`);
+    const label = CHECK_LABELS[finding.code] ?? finding.code;
+    lines.push(`${label.padEnd(labelWidth)}  ${finding.severity.padEnd(9)} ${finding.summary}`);
     for (const detail of finding.details) {
       lines.push(`  ${detail}`);
     }

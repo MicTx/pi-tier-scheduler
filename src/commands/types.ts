@@ -1,4 +1,4 @@
-import type { LayerStatus } from "../config/types";
+import type {CandidateRef, LayerStatus, ThinkingBias} from "../config/types";
 
 /**
  * Command-surface type contracts (05-commands.md §4.1/§4.2).
@@ -54,8 +54,8 @@ export type ConfigSummary = {
   health: "valid" | "degraded";
   user: LayerStatus;
   project: LayerStatus;
-  candidateCounts: Record<ManualTier, number>;
-  defaultBias: "low" | "medium" | "high";
+  tierCandidates: Record<ManualTier, readonly CandidateRef[]>;
+  defaultBias: ThinkingBias;
   sticky: boolean;
   maxAttemptsPerRequest: number;
   maxTierSwitches: number;

@@ -241,7 +241,11 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
         "last dispatch: anthropic/claude-sonnet-4-1 (tier=pillar, thinking=medium)",
         "last reason: work_phase (selected=pillar)",
         "config: valid; user=loaded; project=missing; bias=medium; sticky=true",
-        "candidates: brain=1; pillar=2; crowd=0",
+        "tiers:",
+        "  tier    candidates",
+        "  brain   acme/brain-1",
+        "  pillar  acme/pillar-1 -> acme/pillar-2",
+        "  crowd   (none)",
         "limits: attempts=1/3; tier-switches=0/2",
       ].join("\n"),
     );
@@ -299,7 +303,7 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
       lastDispatch: undefined,
     }));
     expect(text).toContain("config: not loaded (built-in defaults in effect)");
-    expect(text).toContain("candidates: unavailable");
+    expect(text).toContain("tiers: unavailable");
     expect(text).toContain("limits: unavailable");
   });
 
@@ -338,7 +342,9 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
     expect(text).not.toContain("\u001b");
     expect(text).toContain("selection: not selected");
     expect(text).toContain("thinking: unavailable");
-    expect(text).toContain("candidates: brain=0; pillar=0; crowd=0");
+    expect(text).toContain("  brain   (none)");
+    expect(text).toContain("  pillar  (none)");
+    expect(text).toContain("  crowd   (none)");
     expect(text).toContain("limits: attempts=unavailable/3; tier-switches=unavailable/2");
   });
 

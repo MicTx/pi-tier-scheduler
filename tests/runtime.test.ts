@@ -710,7 +710,8 @@ describe("command dependencies — end-to-end status seam", () => {
       expect(text).toContain("routing: automatic");
       expect(text).toContain("last dispatch: not recorded in this runtime");
       expect(text).toContain("config: valid; user=missing; project=loaded; bias=medium; sticky=true");
-      expect(text).toContain("candidates: brain=0; pillar=1; crowd=0");
+      expect(text).toContain("  pillar  acme/pillar-1");
+      expect(text).toContain("  crowd   (none)");
       expect(text).toContain("limits: attempts=0/3; tier-switches=0/2");
       expect(stdoutWrite).not.toHaveBeenCalled();
       expect(consoleError).not.toHaveBeenCalled();

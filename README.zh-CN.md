@@ -46,7 +46,7 @@ $ pi install npm:pi-tier-scheduler
 ### 从 GitHub
 
 ```sh
-$ pi install git:github.com/MicTx/pi-tier-scheduler@v0.3.2
+$ pi install git:github.com/MicTx/pi-tier-scheduler@v0.4.0
 ```
 
 `git:` 形式对任何可克隆的 git 远端都成立——公司 Gitea、自建服务或 fork 都行。用 `@<tag>` 钉版：后续更新只核对检出内容，不会移动钉死的 ref。认证走你 git 克隆该主机时本来就用的那套凭据；本包自身不保存任何密钥。`pi remove` 接同一个源。
@@ -119,7 +119,7 @@ $ /ts auto
 ```
 
 - `tiers.<tier>.candidates` 是有序的 `{ "provider", "id" }` 列表。这份列表就是你的模型清单:**上面的示例 ID 只是示意,由用户自填——内置候选数组为空**,在你配置至少一个候选之前,路由无模型可派。
-- `policy.defaultBias`(`low` | `medium` | `high`,默认 `medium`)是会话没有手动选择时施加的思考强度偏置。
+- `policy.defaultBias`(`minimal` | `low` | `medium` | `high` | `xhigh` | `max`,默认 `medium`)是会话没有手动选择时施加的思考强度偏置。
 - `policy.sticky`(默认 `true`)让续接请求尽量留在上一个实体模型上(只要它仍合格),保住提示缓存。
 - `retry.maxAttemptsPerRequest`(默认 `3`)与 `retry.maxTierSwitches`(默认 `2`)约束恢复游走。这是只能收窄、不能放宽的天花板:代码强制硬上限——每请求 5 次尝试、每路由 3 次换层。
 
@@ -140,7 +140,7 @@ $ /ts auto
 1. **手动覆盖**——`/ts use <tier>` 永远压过自动路由。
 2. **工作阶段**——对会话分类:规划 → `brain`,实现/验证 → `pillar`,闲聊 → `crowd`,无法分类 → `pillar`。
 3. **复杂度**——高复杂度升一层,低复杂度降一层。
-4. **思考偏置**——选中的虚拟思考等级(或 `policy.defaultBias`)朝同一方向轻推。
+4. **思考偏置**——选中的虚拟思考等级(或 `policy.defaultBias`)朝同一方向轻推。完整 Pi 档位全部开放:`minimal`/`low` 倾向 `crowd`,`medium` 不动,`high`/`xhigh`/`max` 倾向 `brain`——更深的档位会传给路由到的模型,并按其能力钳制。
 5. **候选选择**——该层配置顺序里第一个合格的候选胜出。合格性过滤已配置且已授权的 provider 和任务约束(图像输入、推理要求);请求的思考强度会被钳到实体模型支持的范围内。
 
 每个决策都产出机器可读的理由(`work_phase`、`complexity_adjustment`、`thinking_bias`、`manual_override`、`manual_override_fallback`、`automatic_fallback`、`direct`);`/ts status` 显示最近一条。
@@ -153,13 +153,13 @@ $ /ts auto
 
 | 命令 | 可用模式 | 行为 |
 | --- | --- | --- |
-| `/ts` 或 `/ts status` | 全部 | 当前选择、最近派发的实体模型、生效中的覆盖、最近路由理由、生效配置摘要 |
+| `/ts` 或 `/ts status` | 全部 | 当前选择、最近派发的实体模型、生效中的覆盖、最近路由理由、生效配置摘要(含逐层候选表)|
 | `/ts use <tier>` | 全部 | 手动覆盖到 `brain`、`pillar` 或 `crowd`;选中 `ts/auto` 并设置对应偏置 |
 | `/ts brain` · `/ts pillar` · `/ts crowd` | 全部 | `/ts use <tier>` 的短别名 |
 | `/ts auto` | 全部 | 解除手动覆盖,回到自动路由 |
 | `/ts init` | TUI | 引导式首次配置——从已装模型中点选候选 |
 | `/ts config` | 全部 / TUI | 任何模式都能看生效合并配置;**编辑仅限 TUI** |
-| `/ts doctor` | 全部 | 配置合法性、模型可用性、凭据在场情况、路由器状态健康度、兼容地板 |
+| `/ts doctor` | 全部 | 配置合法性、模型可用性、凭据在场情况、路由器状态健康度、兼容地板——对齐的检查表输出 |
 
 模式行为:`/ts init` 与 `/ts config` 的编辑半边要打开交互式 Pi 对话框,因此仅限 TUI;在 RPC、JSON、print 模式下它们回复一条纯文本提示,不做任何变更。status、覆盖、解除、doctor 在所有模式下行为一致,纯文本输出。
 

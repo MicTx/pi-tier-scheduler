@@ -46,7 +46,7 @@ One command, all of it: the package is resolved from the npm registry, installed
 ### From GitHub
 
 ```sh
-$ pi install git:github.com/MicTx/pi-tier-scheduler@v0.3.2
+$ pi install git:github.com/MicTx/pi-tier-scheduler@v0.4.0
 ```
 
 The `git:` form works from any git remote you can clone — a company Gitea, your own server, or a fork. Pin with `@<tag>`: package updates reconcile the checkout but never move a pinned ref. Authentication is whatever your git already uses to clone that host; the package itself stores no secrets. `pi remove` takes the same source.
@@ -119,7 +119,7 @@ Layers are deep-merged with the precedence **built-in defaults < user < project*
 ```
 
 - `tiers.<tier>.candidates` is an ordered list of `{ "provider", "id" }` entries. The list is your own model inventory: **example IDs above are illustrative, user-supplied values — the built-in candidate arrays are empty** and routing has nothing to dispatch until you configure at least one candidate.
-- `policy.defaultBias` (`low` | `medium` | `high`, default `medium`) is the thinking-strength bias applied when the session has no explicit manual selection.
+- `policy.defaultBias` (`minimal` | `low` | `medium` | `high` | `xhigh` | `max`, default `medium`) is the thinking-strength bias applied when the session has no explicit manual selection.
 - `policy.sticky` (default `true`) keeps continuation requests on the previous physical model when it is still eligible, preserving prompt caches.
 - `retry.maxAttemptsPerRequest` (default `3`) and `retry.maxTierSwitches` (default `2`) bound recovery walks. These are ceilings you can narrow, not raise: the code enforces hard caps of 5 attempts per request and 3 tier switches per route.
 
@@ -140,7 +140,7 @@ Select `ts/auto` as your session model (via `/model`, `--model`, or settings —
 1. **Manual override** — `/ts use <tier>` always wins over automatic routing.
 2. **Work phase** — the conversation is classified: planning → `brain`, implementation/verification → `pillar`, conversation → `crowd`, unclassifiable → `pillar`.
 3. **Complexity** — high-complexity work steps one tier up, low-complexity one tier down.
-4. **Thinking bias** — the selected virtual thinking level (or `policy.defaultBias`) nudges the tier the same way.
+4. **Thinking bias** — the selected virtual thinking level (or `policy.defaultBias`) nudges the tier the same way. The full Pi ladder is exposed: `minimal`/`low` lean toward `crowd`, `medium` stays put, `high`/`xhigh`/`max` lean toward `brain` — the deeper strengths pass through to the routed model and are clamped to what it supports.
 5. **Candidate selection** — the first eligible candidate in the tier's configured order wins. Eligibility filters for configured-and-credentialed providers and task constraints (image input, reasoning requirements), and the requested thinking strength is clamped to what the physical model supports.
 
 Every decision produces a machine-readable reason (`work_phase`, `complexity_adjustment`, `thinking_bias`, `manual_override`, `manual_override_fallback`, `automatic_fallback`, `direct`); `/ts status` shows the last one.
@@ -153,13 +153,13 @@ One command family, registered as `/ts`:
 
 | Command | Modes | Behavior |
 | --- | --- | --- |
-| `/ts` or `/ts status` | all | Current selection, last dispatched physical model, active override, last route reason, effective config summary |
+| `/ts` or `/ts status` | all | Current selection, last dispatched physical model, active override, last route reason, effective config summary with a per-tier candidate table |
 | `/ts use <tier>` | all | Manual override to `brain`, `pillar`, or `crowd`; selects `ts/auto` and sets the matching bias level |
 | `/ts brain` · `/ts pillar` · `/ts crowd` | all | Short aliases for `/ts use <tier>` |
 | `/ts auto` | all | Release the manual override and return to automatic routing |
 | `/ts init` | TUI | Guided first-run setup — pick candidates from your installed models |
 | `/ts config` | all / TUI | View the effective merged configuration in any mode; **editing is TUI-only** |
-| `/ts doctor` | all | Config validity, model availability, credential presence, router-state health, compatibility floor |
+| `/ts doctor` | all | Config validity, model availability, credential presence, router-state health, compatibility floor — rendered as an aligned check table |
 
 Mode behavior: `/ts init` and the editing half of `/ts config` open interactive Pi dialogs and therefore require TUI mode; in RPC, JSON, and print modes they respond with a plain notice and make no changes. Status, override, release, and doctor work identically in every mode with plain text output.
 

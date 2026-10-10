@@ -4,7 +4,7 @@ import type { BiasNormalization } from "./types";
 
 export const ROUTING_TIER_LADDER: readonly TierName[] = ["crowd", "pillar", "brain"];
 
-const BIAS_LEVELS: readonly ThinkingBias[] = ["low", "medium", "high"];
+const BIAS_LEVELS: readonly ThinkingBias[] = ["minimal", "low", "medium", "high", "xhigh", "max"];
 
 function indexOfTier(tier: TierName): number {
   return ROUTING_TIER_LADDER.indexOf(tier);
@@ -32,8 +32,11 @@ export function adjustTierForComplexity(base: TierName, complexity: import("./ty
 }
 
 export function adjustTierForBias(tier: TierName, bias: ThinkingBias): TierName {
-  if (bias === "high") return moveTier(tier, 1);
-  if (bias === "low") return moveTier(tier, -1);
+  // minimal/low lean toward crowd; high and above lean toward brain. xhigh
+  // and max pin the tier the same way as high — their extra strength is the
+  // requested thinking level itself, passed through and clamped per model.
+  if (bias === "high" || bias === "xhigh" || bias === "max") return moveTier(tier, 1);
+  if (bias === "minimal" || bias === "low") return moveTier(tier, -1);
   return tier;
 }
 

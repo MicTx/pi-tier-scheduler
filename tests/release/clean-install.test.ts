@@ -322,13 +322,13 @@ describe.skipIf(!PI_AVAILABLE)("F8.3 clean-install verification (host pi present
         expect(run.stdout).toBe("");
         expect(run.stderr).toContain("pi-tier-scheduler doctor");
         // Zero credentials in the isolated environment: configured=0 is the expected proof.
-        expect(run.stderr).toContain("credentials: pass (configured=0; missing=0; unknown=0)");
-        expect(run.stderr).toMatch(/router state: pass \(state=absent; attempts=\d+\/\d+; tier-switches=\d+\/\d+\)/);
+        expect(run.stderr).toContain("credentials    pass      configured=0; missing=0; unknown=0");
+        expect(run.stderr).toMatch(/router state   pass      state=absent; attempts=\d+\/\d+; tier-switches=\d+\/\d+/);
         expect(run.stderr).toMatch(
-          /compatibility: pass \(Pi \d+\.\d+\.\d+; required API surface present\)/,
+          /compatibility  pass      Pi \d+\.\d+\.\d+; required API surface present/,
         );
         if (PI_VERSION !== undefined && /^\d+\.\d+\.\d+$/.test(PI_VERSION)) {
-          expect(run.stderr).toContain(`compatibility: pass (Pi ${PI_VERSION};`);
+          expect(run.stderr).toContain(`compatibility  pass      Pi ${PI_VERSION};`);
         }
         expectNoCredentialShape("doctor output", run.stderr);
         expectNoAbsolutePath("doctor output", run.stderr, [agentDir, homeDir, projectDir, REPO_ROOT]);
@@ -388,7 +388,9 @@ describe.skipIf(!PI_AVAILABLE)("F8.3 clean-install verification (host pi present
           expect(message, bounded(message)).toContain(
             "config: valid; user=loaded; project=loaded; bias=high; sticky=true",
           );
-          expect(message).toContain("candidates: brain=0; pillar=1; crowd=0");
+          expect(message).toContain("  brain   (none)");
+          expect(message).toContain("  pillar  anthropic/claude-sonnet-4-5");
+          expect(message).toContain("  crowd   (none)");
           expectNoAbsolutePath("rpc status message", message, [agentDir, homeDir, projectDir, REPO_ROOT]);
           expectNoCredentialShape("rpc status message", message);
         } finally {

@@ -518,7 +518,7 @@ describe("error record shape (§7.1 item 3)", () => {
       "INVALID_VALUE",
       "policy.defaultBias",
     );
-    expect(bias.expected).toBe("one of low, medium, high");
+    expect(bias.expected).toBe("one of minimal, low, medium, high, xhigh, max");
     expect(bias.received).toBe('"strong"');
   });
 

@@ -3,7 +3,7 @@ import type {
   SessionEntry,
 } from "@earendil-works/pi-coding-agent";
 
-import type { LayerStatus, LoadResult } from "../config/types";
+import type { CandidateRef, LayerStatus, LoadResult } from "../config/types";
 import { readLatestRouterControl } from "../routing";
 import { TS_VIRTUAL_MODEL_ID, TS_VIRTUAL_PROVIDER } from "../routing/virtual-model";
 import { respond } from "../ui/respond";
@@ -11,6 +11,7 @@ import type {
   ConfigSummary,
   LastDispatchSummary,
   TsStatus,
+  ManualTier,
 } from "./types";
 
 /**
@@ -64,10 +65,10 @@ function summarizeConfig(config: StatusConfigInput): ConfigSummary {
     health: config.problems.length > 0 ? "degraded" : "valid",
     user: config.layers.user,
     project: config.layers.project,
-    candidateCounts: {
-      brain: config.effective.tiers.brain.candidates.length,
-      pillar: config.effective.tiers.pillar.candidates.length,
-      crowd: config.effective.tiers.crowd.candidates.length,
+    tierCandidates: {
+      brain: config.effective.tiers.brain.candidates,
+      pillar: config.effective.tiers.pillar.candidates,
+      crowd: config.effective.tiers.crowd.candidates,
     },
     defaultBias: config.effective.policy.defaultBias,
     sticky: config.effective.policy.sticky,
@@ -137,17 +138,33 @@ function renderDispatch(status: TsStatus): string[] {
   ];
 }
 
+/** Tier rows for the status table; ordered fallback chain as `->`. */
+const TIER_ROW_ORDER: readonly ManualTier[] = ["brain", "pillar", "crowd"];
+
+/** Candidates shown per tier before the list is truncated (bounded output). */
+const TIER_TABLE_MAX_CANDIDATES = 4;
+
+function renderTierRow(tier: ManualTier, candidates: readonly CandidateRef[]): string {
+  if (candidates.length === 0) return `  ${tier.padEnd(7)} (none)`;
+  const shown = candidates.slice(0, TIER_TABLE_MAX_CANDIDATES).map((c) => `${c.provider}/${c.id}`);
+  const overflow = candidates.length - TIER_TABLE_MAX_CANDIDATES;
+  const list = overflow > 0 ? `${shown.join(" -> ")} (+${overflow} more)` : shown.join(" -> ");
+  return `  ${tier.padEnd(7)} ${list}`;
+}
+
 function renderConfig(status: TsStatus): string[] {
   if (status.config === undefined) {
     return [
       "config: not loaded (built-in defaults in effect)",
-      "candidates: unavailable",
+      "tiers: unavailable",
     ];
   }
   const c = status.config;
   return [
     `config: ${c.health}; user=${c.user}; project=${c.project}; bias=${c.defaultBias}; sticky=${c.sticky}`,
-    `candidates: brain=${c.candidateCounts.brain}; pillar=${c.candidateCounts.pillar}; crowd=${c.candidateCounts.crowd}`,
+    "tiers:",
+    "  tier    candidates",
+    ...TIER_ROW_ORDER.map((tier) => renderTierRow(tier, c.tierCandidates[tier])),
   ];
 }
 

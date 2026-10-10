@@ -18,7 +18,14 @@ export const TS_VIRTUAL_MODEL_ID = "auto";
 export const TS_VIRTUAL_MODEL_NAME = "Auto";
 export const TS_VIRTUAL_CONTEXT_WINDOW = 128_000;
 export const TS_VIRTUAL_MAX_TOKENS = 16_384;
-export const TS_VIRTUAL_THINKING_LEVELS: readonly ModelThinkingLevel[] = ["low", "medium", "high"];
+export const TS_VIRTUAL_THINKING_LEVELS: readonly ModelThinkingLevel[] = [
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+];
 export { PI_VIRTUAL_API };
 
 export type AutoModelRoute<TState = unknown> = (

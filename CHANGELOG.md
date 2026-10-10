@@ -2,6 +2,16 @@
 
 User-visible release history for `pi-tier-scheduler`. Dates are omitted until a release is tagged; the compatibility floor of each release is verified against the Pi extension API before shipping.
 
+## 0.4.0 — 2026-10-09
+
+### Added
+
+- **Full thinking ladder** — `ts/auto` now exposes every Pi thinking strength (`minimal`, `low`, `medium`, `high`, `xhigh`, `max`), and `policy.defaultBias` accepts the same values. `xhigh`/`max` pin the brain tier and pass the deeper strength through, clamped per model.
+
+### Changed
+
+- **Table-form status and doctor output** — `/ts status` ends with a per-tier candidate table (ordered fallback chain rendered as `->`) instead of bare counts; `/ts doctor` renders checks as an aligned `check | status | summary` table.
+
 ## 0.3.2 — 2026-10-09
 
 ### Fixed

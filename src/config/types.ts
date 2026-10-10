@@ -7,7 +7,7 @@
 
 export type TierName = "brain" | "pillar" | "crowd";
 
-export type ThinkingBias = "low" | "medium" | "high";
+export type ThinkingBias = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
 
 export type ConfigSource = "defaults" | "user" | "project" | "session";
 

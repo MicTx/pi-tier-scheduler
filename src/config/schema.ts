@@ -23,7 +23,7 @@ import type {
 
 const ROOT_KEYS: readonly string[] = ["schemaVersion", "tiers", "policy", "retry"];
 const TIER_NAMES: readonly string[] = ["brain", "pillar", "crowd"];
-const THINKING_BIASES: readonly string[] = ["low", "medium", "high"];
+const THINKING_BIASES: readonly string[] = ["minimal", "low", "medium", "high", "xhigh", "max"];
 
 /** C0, DEL, and C1 control characters. */
 const CONTROL_CHARS = /[\u0000-\u001F\u007F-\u009F]/;
@@ -414,7 +414,7 @@ function validatePolicy(ctx: WalkContext, root: Record<string, unknown>): void {
       "policy.defaultBias",
       "TYPE_MISMATCH",
       "policy must define defaultBias",
-      "one of low, medium, high",
+      "one of minimal, low, medium, high, xhigh, max",
       "missing",
     );
   }
@@ -449,7 +449,7 @@ function validateBias(ctx: WalkContext, bias: unknown): void {
       "policy.defaultBias",
       "TYPE_MISMATCH",
       "defaultBias must be a string",
-      "one of low, medium, high",
+      "one of minimal, low, medium, high, xhigh, max",
       receivedOf(bias),
     );
     return;
@@ -459,8 +459,8 @@ function validateBias(ctx: WalkContext, bias: unknown): void {
       ctx,
       "policy.defaultBias",
       "INVALID_VALUE",
-      "defaultBias must be one of low, medium, high",
-      "one of low, medium, high",
+      "defaultBias must be one of minimal, low, medium, high, xhigh, max",
+      "one of minimal, low, medium, high, xhigh, max",
       preview(bias),
     );
   }
