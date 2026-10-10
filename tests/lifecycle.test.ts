@@ -340,7 +340,7 @@ describe("ms command handler", () => {
     // F5.1: status is live; without a loaded config the fixed not-loaded
     // line renders instead of a fabricated summary.
     expect(String(message)).toContain("pi-tier-scheduler status");
-    expect(String(message)).toContain("config: not loaded (built-in defaults in effect)");
+    expect(String(message)).toContain("config: not loaded — built-in defaults in effect");
   });
 
   it("reaches the live command path even when no session_start has fired", async () => {

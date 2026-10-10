@@ -203,7 +203,7 @@ export async function applyManualTier(
 
   return {
     ok: true,
-    message: `manual routing set to ${tier} (ts/auto thinking=${TIER_BIAS[tier]})`,
+    message: `pinned: ${tier} • ${TIER_BIAS[tier]}`,
     controlChanged,
   };
 }
@@ -258,7 +258,7 @@ export async function applyAutomatic(
 
   return {
     ok: true,
-    message: `automatic routing enabled (bias=${bias})`,
+    message: `auto routing • bias ${bias}`,
     controlChanged,
   };
 }

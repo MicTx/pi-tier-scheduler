@@ -202,6 +202,96 @@ function pickableGroups(
     .filter((group) => group.models.length > 0);
 }
 
+/**
+ * The wizard's tier step (0.5.0 redesign): no action menu — go straight to
+ * picking. Each round is one pick (two-level when several providers remain),
+ * the first round offers an explicit `skip <tier>`, and after every pick a
+ * single confirm asks whether to add another. Zero picks plus skip is a
+ * legitimate explicit-empty answer.
+ */
+export async function pickTierCandidates(
+  ctx: ConfigDialogsContext,
+  tier: TierName,
+): Promise<DialogFlowOutcome<CandidateRef[]>> {
+  const list: CandidateRef[] = [];
+  const skipAction = `skip ${tier}`;
+
+  for (;;) {
+    if (ctx.isClosed()) return closed();
+    const groups = pickableGroups(ctx, list);
+    const firstRound = list.length === 0;
+
+    if (groups.length === 0) {
+      const options = firstRound ? [MANUAL_ENTRY_ACTION, skipAction] : [MANUAL_ENTRY_ACTION];
+      const choice = await ctx.ui.select(`tier ${tier} — add a candidate`, options, dialogOpts(ctx));
+      if (choice === undefined) return cancelled();
+      if (choice === skipAction) return { ok: true, value: list };
+      const candidate = await askCandidatePair(ctx, tier, list);
+      if (!candidate.ok) return candidate;
+      list.push(candidate.value);
+    } else if (groups.length === 1) {
+      const group = groups[0]!;
+      const options = [
+        ...group.models.map((m) => m.label),
+        MANUAL_ENTRY_ACTION,
+        ...(firstRound ? [skipAction] : []),
+      ];
+      const pick = await ctx.ui.select(`tier ${tier} — ${group.provider}`, options, dialogOpts(ctx));
+      if (pick === undefined) return cancelled();
+      if (pick === skipAction) return { ok: true, value: list };
+      if (pick === MANUAL_ENTRY_ACTION) {
+        const candidate = await askCandidatePair(ctx, tier, list);
+        if (!candidate.ok) return candidate;
+        list.push(candidate.value);
+      } else {
+        const option = group.models.find((m) => m.label === pick);
+        if (option === undefined) continue;
+        list.push({ provider: option.ref.provider, id: option.ref.id });
+      }
+    } else {
+      const providerOptions = [
+        ...groups.map((g) => g.provider),
+        MANUAL_ENTRY_ACTION,
+        ...(firstRound ? [skipAction] : []),
+      ];
+      const providerPick = await ctx.ui.select(`tier ${tier} — pick a provider`, providerOptions, dialogOpts(ctx));
+      if (providerPick === undefined) return cancelled();
+      if (providerPick === skipAction) return { ok: true, value: list };
+      if (providerPick === MANUAL_ENTRY_ACTION) {
+        const candidate = await askCandidatePair(ctx, tier, list);
+        if (!candidate.ok) return candidate;
+        list.push(candidate.value);
+      } else {
+        const group = groups.find((g) => g.provider === providerPick);
+        if (group === undefined) continue;
+        const pick = await ctx.ui.select(
+          `tier ${tier} — ${group.provider}`,
+          [...group.models.map((m) => m.label), MANUAL_ENTRY_ACTION],
+          dialogOpts(ctx),
+        );
+        if (pick === undefined) return cancelled();
+        if (pick === MANUAL_ENTRY_ACTION) {
+          const candidate = await askCandidatePair(ctx, tier, list);
+          if (!candidate.ok) return candidate;
+          list.push(candidate.value);
+        } else {
+          const option = group.models.find((m) => m.label === pick);
+          if (option === undefined) continue;
+          list.push({ provider: option.ref.provider, id: option.ref.id });
+        }
+      }
+    }
+
+    if (list.length >= MAX_CANDIDATES_PER_TIER) return { ok: true, value: list };
+    const more = await ctx.ui.confirm(
+      `tier ${tier}`,
+      `add another candidate? (${list.length} set)`,
+      dialogOpts(ctx),
+    );
+    if (!more) return { ok: true, value: list };
+  }
+}
+
 /** Pick one model inside a provider group; `back…` returns to the provider
  *  dialog when there was one. */
 async function pickModelOfProvider(
@@ -277,8 +367,8 @@ export async function confirmEditExistingLayer(
 ): Promise<DialogFlowOutcome<true>> {
   if (ctx.isClosed()) return closed();
   const yes = await ctx.ui.confirm(
-    `edit the existing ${layer.scope} layer?`,
-    `${layerSummaryLine(layer)}\nthe wizard will clone this layer as the starting draft; escape cancels with no write`,
+    `quick-set the tiers of the existing ${layer.scope} layer?`,
+    `${layerSummaryLine(layer)}\nthe wizard re-picks brain/pillar/crowd and keeps the rest; /ts config edits everything; escape cancels with no write`,
     dialogOpts(ctx),
   );
   return yes ? { ok: true, value: true } : cancelled();

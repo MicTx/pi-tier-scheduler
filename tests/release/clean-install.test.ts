@@ -280,11 +280,10 @@ describe.skipIf(!PI_AVAILABLE)("F8.3 clean-install verification (host pi present
         const run = runPi(["--no-session", "--print", "/ts status"], { cwd: projectDir, agentDir, homeDir });
         expect(run.status).toBe(0);
         expect(run.stdout).toBe("");
-        expect(run.stderr).toContain("selection: ts/auto");
-        expect(run.stderr).toContain("routing: automatic");
-        expect(run.stderr).toContain("override: none");
+        expect(run.stderr).toContain("(ts) auto • ");
+        expect(run.stderr).toContain("last: not recorded in this runtime");
         // No config fixtures exist yet: the documented not-loaded summary is the truth.
-        expect(run.stderr).toContain("config: not loaded (built-in defaults in effect)");
+        expect(run.stderr).toContain("config: not loaded — built-in defaults in effect");
       }, TEST_TIMEOUT_MS);
 
       it("hook 4: /ts use pillar overrides routing inside one session and /ts auto releases it", () => {
@@ -294,10 +293,8 @@ describe.skipIf(!PI_AVAILABLE)("F8.3 clean-install verification (host pi present
         );
         expect(use.status, `stderr: ${bounded(use.stderr)}`).toBe(0);
         expect(use.stdout).toBe("");
-        expect(use.stderr).toContain("manual routing set to pillar (ts/auto thinking=medium)");
-        expect(use.stderr).toContain("routing: manual");
-        expect(use.stderr).toContain("override: pillar");
-        expect(use.stderr).toContain("thinking: medium");
+        expect(use.stderr).toContain("pinned: pillar • medium");
+        expect(use.stderr).toContain("(ts) pillar • medium");
 
         const release = runPi(
           ["--no-session", "--print", "/ts auto", "/ts status"],
@@ -305,9 +302,8 @@ describe.skipIf(!PI_AVAILABLE)("F8.3 clean-install verification (host pi present
         );
         expect(release.status, `stderr: ${bounded(release.stderr)}`).toBe(0);
         expect(release.stdout).toBe("");
-        expect(release.stderr).toContain("automatic routing enabled (bias=medium)");
-        expect(release.stderr).toContain("routing: automatic");
-        expect(release.stderr).toContain("override: none");
+        expect(release.stderr).toContain("auto routing • bias medium");
+        expect(release.stderr).toContain("(ts) auto • medium");
         expectNoAbsolutePath("/ts use+auto output", use.stderr + release.stderr, [
           agentDir,
           homeDir,
@@ -386,7 +382,7 @@ describe.skipIf(!PI_AVAILABLE)("F8.3 clean-install verification (host pi present
           const message = typeof notify!.message === "string" ? notify!.message : "";
           // Project layer wins the precedence: bias high, pillar candidate counted.
           expect(message, bounded(message)).toContain(
-            "config: valid; user=loaded; project=loaded; bias=high; sticky=true",
+            "config: valid · user loaded · project loaded · bias high · sticky on",
           );
           expect(message).toContain("  brain   (none)");
           expect(message).toContain("  pillar  anthropic/claude-sonnet-4-5");

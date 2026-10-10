@@ -179,7 +179,7 @@ describe("mode matrix — /ts status response channels", () => {
     const tui = ctxFor("tui");
     await dispatch("use brain", tui.ctx, deps(tui.spies));
     expect(tui.notify).toHaveBeenCalledWith(
-      "manual routing set to brain (ts/auto thinking=high)",
+      "pinned: brain • high",
       "info",
     );
     expect(tui.spies.setModel).toHaveBeenCalledTimes(1);
@@ -193,7 +193,7 @@ describe("mode matrix — /ts status response channels", () => {
     await dispatch("auto", print.ctx, deps(print.spies));
     await dispatch("init", print.ctx, deps(print.spies));
     expect(consoleError).toHaveBeenCalledTimes(2);
-    expect(String(consoleError.mock.calls[0]?.[0])).toContain("automatic routing enabled (bias=medium)");
+    expect(String(consoleError.mock.calls[0]?.[0])).toContain("auto routing • bias medium");
     expect(String(consoleError.mock.calls[1]?.[0])).toContain(
       "interactive configuration requires TUI mode; no changes made",
     );
@@ -212,7 +212,7 @@ describe("mode matrix — /ts status response channels", () => {
       expect(spies.appendEntry).toHaveBeenCalledTimes(2);
     }
     expect(
-      consoleError.mock.calls.filter((call) => String(call?.[0]).includes("manual routing set to")),
+      consoleError.mock.calls.filter((call) => String(call?.[0]).includes("pinned:")),
     ).toHaveLength(4);
     expect(stdoutWrite).not.toHaveBeenCalled();
   });

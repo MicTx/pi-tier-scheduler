@@ -216,13 +216,12 @@ function happyPath(from: "missing" | "valid" | "invalid"): Scripted[] {
   return [
     { select: "project" },
     ...prologue,
-    { select: KEEP }, // brain
-    { select: KEEP }, // pillar
-    { select: KEEP }, // crowd
-    { select: "medium" },
-    { confirm: true }, // sticky
-    { select: "3" },
-    { select: "2" },
+    { select: "Enter manually…" }, // brain (no catalog in this harness)
+    { input: " acme " },
+    { input: " brain-1 " },
+    { confirm: false }, // add another? no
+    { select: "skip pillar" },
+    { select: "skip crowd" },
     { confirm: true }, // commit
   ];
 }
@@ -281,17 +280,16 @@ describe("/ts init — success path (hooks 1, 6, 7)", () => {
     const { deps, responses, runtime } = makeDeps();
     const face = makeCtx([
       { select: "project" },
-      { select: ADD },
+      { select: "Enter manually…" }, // brain: no catalog in this harness
       { input: " acme " },
       { input: " brain-1 " },
-      { select: KEEP },
-      { select: KEEP }, // pillar
-      { select: KEEP }, // crowd
-      { select: "high" },
-      { confirm: false }, // sticky=false is an answer, not a cancel
-      { select: "5" },
-      { select: "3" },
-      { confirm: true },
+      { confirm: false }, // add another? no
+      { select: "Enter manually…" }, // pillar
+      { input: " acme " },
+      { input: " pillar-1 " },
+      { confirm: false },
+      { select: "skip crowd" },
+      { confirm: true }, // save
     ]);
 
     await handleInit("", face.ctx, deps);
@@ -303,11 +301,11 @@ describe("/ts init — success path (hooks 1, 6, 7)", () => {
           schemaVersion: 1,
           tiers: {
             brain: { candidates: [{ provider: "acme", id: "brain-1" }] },
-            pillar: { candidates: [] },
+            pillar: { candidates: [{ provider: "acme", id: "pillar-1" }] },
             crowd: { candidates: [] },
           },
-          policy: { defaultBias: "high", sticky: false },
-          retry: { maxAttemptsPerRequest: 5, maxTierSwitches: 3 },
+          policy: { defaultBias: "medium", sticky: true },
+          retry: { maxAttemptsPerRequest: 3, maxTierSwitches: 2 },
         },
         null,
         2,
@@ -332,13 +330,12 @@ describe("/ts init — success path (hooks 1, 6, 7)", () => {
     const { deps, responses } = makeDeps({ env: { PI_CODING_AGENT_DIR: agentDir } });
     const face = makeCtx([
       { select: "user" },
-      { select: KEEP },
-      { select: KEEP },
-      { select: KEEP },
-      { select: "medium" },
-      { confirm: true },
-      { select: "3" },
-      { select: "2" },
+      { select: "Enter manually…" },
+      { input: " acme " },
+      { input: " user-brain " },
+      { confirm: false },
+      { select: "skip pillar" },
+      { select: "skip crowd" },
       { confirm: true },
     ]);
     await handleInit("", face.ctx, deps);
@@ -359,17 +356,20 @@ describe("/ts init — success path (hooks 1, 6, 7)", () => {
       })}\n`,
     );
     const { deps } = makeDeps();
-    // edit-existing confirm → keep every tier → re-choose the same policy values.
+    // Quick-set confirm → re-pick brain in the same order; policy survives the clone.
     const face = makeCtx([
       { select: "project" },
       { confirm: true },
-      { select: KEEP },
-      { select: KEEP },
-      { select: KEEP },
-      { select: "high" },
-      { confirm: true },
-      { select: "3" },
-      { select: "2" },
+      { select: "Enter manually…" },
+      { input: " acme " },
+      { input: " b2" },
+      { confirm: true }, // add another? yes
+      { select: "Enter manually…" },
+      { input: " acme " },
+      { input: " b1" },
+      { confirm: false },
+      { select: "skip pillar" },
+      { select: "skip crowd" },
       { confirm: true },
     ]);
     await handleInit("", face.ctx, deps);
@@ -385,13 +385,12 @@ describe("/ts init — success path (hooks 1, 6, 7)", () => {
     const face = makeCtx([
       { select: "project" },
       { confirm: true }, // deliberate replacement
-      { select: KEEP },
-      { select: KEEP },
-      { select: KEEP },
-      { select: "medium" },
-      { confirm: true },
-      { select: "3" },
-      { select: "2" },
+      { select: "Enter manually…" },
+      { input: " acme " },
+      { input: " fresh-1 " },
+      { confirm: false },
+      { select: "skip pillar" },
+      { select: "skip crowd" },
       { confirm: true },
     ]);
     await handleInit("", face.ctx, deps);
@@ -410,13 +409,12 @@ describe("/ts init — success path (hooks 1, 6, 7)", () => {
     const { deps, responses } = makeDeps();
     const face = makeCtx([
       { select: "user" },
-      { select: KEEP },
-      { select: KEEP },
-      { select: KEEP },
-      { select: "medium" },
-      { confirm: true },
-      { select: "3" },
-      { select: "2" },
+      { select: "Enter manually…" },
+      { input: " acme " },
+      { input: " user-brain " },
+      { confirm: false },
+      { select: "skip pillar" },
+      { select: "skip crowd" },
       { confirm: true },
     ]);
     await handleInit("", face.ctx, deps);
@@ -441,7 +439,7 @@ describe("/ts init — cancellation matrix (hook 5)", () => {
     const { deps, responses } = makeDeps();
     const face = makeCtx([
       { select: "project" },
-      { select: ADD },
+      { select: "Enter manually…" },
       { input: "" },
       { input: " " },
       { input: "bad\u0000provider" },
@@ -552,21 +550,15 @@ describe("/ts init — catalog-driven candidate picking", () => {
     const { deps, responses, runtime } = makeDeps();
     const face = makeCtx([
       { select: "project" },                            // scope
-      { select: ADD },                                  // brain menu: add
-      { select: "acme" },                               // provider step (two groups)
+      { select: "acme" },                               // brain: provider step (two groups)
       { select: "big · 200k ctx · reasoning" },         // model step within acme
-      { select: KEEP },                                 // brain menu: done
-      { select: ADD },                                  // pillar menu: add
-      { select: "Enter manually…" },                    // manual fallback at the provider step
+      { confirm: false },                               // add another? no
+      { select: "Enter manually…" },                    // pillar: manual at the provider step
       { input: " acme " },
       { input: " pillar-1 " },
-      { select: KEEP },                                 // pillar menu: done
-      { select: KEEP },                                 // crowd
-      { select: "high" },
       { confirm: false },
-      { select: "3" },
-      { select: "2" },
-      { confirm: true },
+      { select: "skip crowd" },
+      { confirm: true },                                // save
     ]);
     // The live surface the wizard's dialog-context builder reads.
     (face.ctx as unknown as { modelRegistry: unknown }).modelRegistry = catalogRegistry();
@@ -590,16 +582,12 @@ describe("/ts init — catalog-driven candidate picking", () => {
     const { deps, responses } = makeDeps();
     const face = makeCtx([
       { select: "project" },
-      { select: ADD },
+      { select: "Enter manually…" },
       { input: " acme " },
       { input: " brain-1 " },
-      { select: KEEP },
-      { select: KEEP },
-      { select: KEEP },
-      { select: "medium" },
-      { confirm: true },
-      { select: "3" },
-      { select: "2" },
+      { confirm: false },
+      { select: "skip pillar" },
+      { select: "skip crowd" },
       { confirm: true },
     ]);
     (face.ctx as unknown as { modelRegistry: unknown }).modelRegistry = {

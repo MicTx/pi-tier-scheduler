@@ -272,11 +272,11 @@ describe("dispatch — /ts routing", () => {
     const built = deps({ getLastDispatch: () => lastDispatch });
     await dispatch("status", ctx, built.deps);
     const text = String(notify.mock.calls[0]?.[0]);
-    expect(text).toContain("selection: ts/auto");
-    expect(text).toContain("routing: manual");
-    expect(text).toContain("override: brain");
-    expect(text).toContain("last dispatch: anthropic/claude-sonnet-4-1 (tier=pillar, thinking=medium)");
-    expect(text).toContain("last reason: work_phase (selected=pillar)");
+    expect(text).toContain("(ts) ");
+    
+    
+    expect(text).toContain("→ claude-sonnet-4-1 • medium");
+    expect(text).toContain("last: work_phase (selected pillar)");
   });
 
   it("runs the real control path for use, auto, and the tier aliases", async () => {
@@ -285,13 +285,13 @@ describe("dispatch — /ts routing", () => {
     const built = deps({}, actions);
 
     await dispatch("use brain", ctx, built.deps);
-    expect(notify).toHaveBeenCalledWith("manual routing set to brain (ts/auto thinking=high)", "info");
+    expect(notify).toHaveBeenCalledWith("pinned: brain • high", "info");
     await dispatch("pillar", ctx, built.deps);
-    expect(notify).toHaveBeenCalledWith("manual routing set to pillar (ts/auto thinking=medium)", "info");
+    expect(notify).toHaveBeenCalledWith("pinned: pillar • medium", "info");
     await dispatch("crowd", ctx, built.deps);
-    expect(notify).toHaveBeenCalledWith("manual routing set to crowd (ts/auto thinking=low)", "info");
+    expect(notify).toHaveBeenCalledWith("pinned: crowd • low", "info");
     await dispatch("auto", ctx, built.deps);
-    expect(notify).toHaveBeenCalledWith("automatic routing enabled (bias=medium)", "info");
+    expect(notify).toHaveBeenCalledWith("auto routing • bias medium", "info");
 
     expect(actions.setModel).toHaveBeenCalledTimes(4);
     expect(actions.setThinkingLevel).toHaveBeenNthCalledWith(1, "high");
@@ -319,7 +319,7 @@ describe("dispatch — /ts routing", () => {
     const { ctx, notify } = fakeCtx(true, { branch: [controlEntry("brain")] });
     const actions = controlActions();
     await dispatch("auto", ctx, deps({}, actions).deps);
-    expect(notify).toHaveBeenCalledWith("automatic routing enabled (bias=medium)", "info");
+    expect(notify).toHaveBeenCalledWith("auto routing • bias medium", "info");
     expect(actions.appendEntry).toHaveBeenCalledWith(CONTROL, {
       schemaVersion: 1,
       manualOverride: null,

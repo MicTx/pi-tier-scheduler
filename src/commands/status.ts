@@ -114,28 +114,25 @@ export function buildTsStatus(
   };
 }
 
-/** Renders one `x=y` pair, or `unavailable` when the value is missing. */
-function slot(value: string | undefined): string {
-  return value === undefined ? "unavailable" : value;
-}
-
-function renderSelection(status: TsStatus): string {
-  if (status.selection === undefined) return "selection: not selected";
-  return `selection: ${status.selection.provider}/${status.selection.id}`;
-}
-
-function renderDispatch(status: TsStatus): string[] {
-  if (status.lastDispatch === undefined) {
-    return [
-      "last dispatch: not recorded in this runtime",
-      "last reason: unavailable",
-    ];
+/**
+ * The story line: what is selected, at what strength, and — once a route has
+ * landed — which model answered. One sentence, the same vocabulary as the
+ * footer; selection, thinking, routing mode, and override collapse into it.
+ */
+function renderStory(status: TsStatus): string {
+  if (status.selection === undefined) return "selection: none — routing inactive";
+  if (status.selection.provider !== TS_VIRTUAL_PROVIDER || status.selection.id !== TS_VIRTUAL_MODEL_ID) {
+    return `selection: ${status.selection.provider}/${status.selection.id} — routing inactive`;
   }
+  const head = `(ts) ${status.manualOverride ?? "auto"} • ${status.thinkingLevel ?? "unavailable"}`;
   const ld = status.lastDispatch;
-  return [
-    `last dispatch: ${ld.model.provider}/${ld.model.id} (tier=${ld.tier}, thinking=${ld.thinkingLevel})`,
-    `last reason: ${ld.reasonCode} (selected=${ld.selectedTier})`,
-  ];
+  return ld === undefined ? head : `${head} → ${ld.model.id} • ${ld.thinkingLevel}`;
+}
+
+function renderLast(status: TsStatus): string {
+  if (status.lastDispatch === undefined) return "last: not recorded in this runtime";
+  const ld = status.lastDispatch;
+  return `last: ${ld.reasonCode} (selected ${ld.selectedTier})`;
 }
 
 /** Tier rows for the status table; ordered fallback chain as `->`. */
@@ -154,33 +151,16 @@ function renderTierRow(tier: ManualTier, candidates: readonly CandidateRef[]): s
 
 function renderConfig(status: TsStatus): string[] {
   if (status.config === undefined) {
-    return [
-      "config: not loaded (built-in defaults in effect)",
-      "tiers: unavailable",
-    ];
+    return ["config: not loaded — built-in defaults in effect"];
   }
   const c = status.config;
   return [
-    `config: ${c.health}; user=${c.user}; project=${c.project}; bias=${c.defaultBias}; sticky=${c.sticky}`,
     "tiers:",
     "  tier    candidates",
     ...TIER_ROW_ORDER.map((tier) => renderTierRow(tier, c.tierCandidates[tier])),
+    "",
+    `config: ${c.health} · user ${c.user} · project ${c.project} · bias ${c.defaultBias} · sticky ${c.sticky ? "on" : "off"}`,
   ];
-}
-
-function renderLimits(status: TsStatus): string {
-  const ld = status.lastDispatch;
-  const c = status.config;
-  if (ld === undefined && c === undefined) return "limits: unavailable";
-  const value = (known: number | undefined, noRoute: number) =>
-    known === undefined ? (ld === undefined ? String(noRoute) : "unavailable") : String(known);
-  const cap = (fromRoute: number | undefined, fromConfig: number | undefined) =>
-    fromRoute === undefined
-      ? fromConfig === undefined
-        ? "unavailable"
-        : String(fromConfig)
-      : String(fromRoute);
-  return `limits: attempts=${value(ld?.attempt, 0)}/${cap(ld?.maxAttempts, c?.maxAttemptsPerRequest)}; tier-switches=${value(ld?.tierSwitches, 0)}/${cap(ld?.maxTierSwitches, c?.maxTierSwitches)}`;
 }
 
 /**
@@ -192,13 +172,10 @@ function renderLimits(status: TsStatus): string {
 export function renderTsStatus(status: TsStatus): string {
   const lines = [
     "pi-tier-scheduler status",
-    renderSelection(status),
-    `thinking: ${slot(status.thinkingLevel)}`,
-    `routing: ${status.routing}`,
-    `override: ${status.manualOverride ?? "none"}`,
-    ...renderDispatch(status),
+    "",
+    renderStory(status),
+    renderLast(status),
     ...renderConfig(status),
-    renderLimits(status),
   ];
   if (status.controlRecovered) {
     lines.push("control: invalid-entry-recovered");
@@ -206,12 +183,7 @@ export function renderTsStatus(status: TsStatus): string {
   return lines.join("\n");
 }
 
-/**
- * Assemble the status command: read the live snapshot through the runtime
- * dependencies and respond once on the mode-appropriate channel. Read-only:
- * no model selection, thinking mutation, config write, or branch append
- * exists on this path.
- */
+/** `/ts status` command face: assemble the snapshot and respond once. */
 export async function runStatusCommand(
   ctx: ExtensionCommandContext,
   deps: StatusDependencies,

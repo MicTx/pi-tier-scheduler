@@ -234,19 +234,16 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
     expect(renderTsStatus(status)).toBe(
       [
         "pi-tier-scheduler status",
-        "selection: ts/auto",
-        "thinking: medium",
-        "routing: automatic",
-        "override: none",
-        "last dispatch: anthropic/claude-sonnet-4-1 (tier=pillar, thinking=medium)",
-        "last reason: work_phase (selected=pillar)",
-        "config: valid; user=loaded; project=missing; bias=medium; sticky=true",
+        "",
+        "(ts) auto • medium → claude-sonnet-4-1 • medium",
+        "last: work_phase (selected pillar)",
         "tiers:",
         "  tier    candidates",
         "  brain   acme/brain-1",
         "  pillar  acme/pillar-1 -> acme/pillar-2",
         "  crowd   (none)",
-        "limits: attempts=1/3; tier-switches=0/2",
+        "",
+        "config: valid · user loaded · project missing · bias medium · sticky on",
       ].join("\n"),
     );
   });
@@ -260,8 +257,8 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
         lastDispatch: undefined,
       });
       const text = renderTsStatus(status);
-      expect(text).toContain(`user=${value}`);
-      expect(text).toContain(`project=${value}`);
+      expect(text).toContain(`user ${value}`);
+      expect(text).toContain(`project ${value}`);
     }
   });
 
@@ -278,7 +275,7 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
       lastDispatch: undefined,
     });
     const text = renderTsStatus(status);
-    expect(text).toContain("config: degraded; user=invalid; project=missing");
+    expect(text).toContain("config: degraded · user invalid · project missing");
     expect(text).not.toContain("INVALID_VALUE");
     expect(text).not.toContain("/absolute/path");
     expect(text).not.toContain("secret debug details");
@@ -291,8 +288,8 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
       config: configInput(),
       lastDispatch: undefined,
     }));
-    expect(text).toContain("last dispatch: not recorded in this runtime");
-    expect(text).toContain("last reason: unavailable");
+    expect(text).toContain("last: not recorded in this runtime");
+    expect(text).toContain("(ts) auto • medium");
   });
 
   it("renders the fixed not-loaded line before the config load completes", () => {
@@ -302,9 +299,8 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
       config: undefined,
       lastDispatch: undefined,
     }));
-    expect(text).toContain("config: not loaded (built-in defaults in effect)");
-    expect(text).toContain("tiers: unavailable");
-    expect(text).toContain("limits: unavailable");
+    expect(text).toContain("config: not loaded — built-in defaults in effect");
+    expect(text).not.toContain("tiers:");
   });
 
   it("adds the bounded recovery marker only when recovery happened", () => {
@@ -340,12 +336,11 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
     });
     const text = renderTsStatus(degraded);
     expect(text).not.toContain("\u001b");
-    expect(text).toContain("selection: not selected");
-    expect(text).toContain("thinking: unavailable");
+    expect(text).toContain("selection: none — routing inactive");
     expect(text).toContain("  brain   (none)");
     expect(text).toContain("  pillar  (none)");
     expect(text).toContain("  crowd   (none)");
-    expect(text).toContain("limits: attempts=unavailable/3; tier-switches=unavailable/2");
+    expect(text).toContain("last: work_phase (selected pillar)");
   });
 
   it("renders a sticky dispatch without attempt fields as unavailable, not fabricated", () => {
@@ -361,8 +356,8 @@ describe("renderTsStatus — canonical shape and redaction (hooks 2, 3, 6)", () 
         maxTierSwitches: undefined,
       }),
     });
-    expect(renderTsStatus(status)).toContain("last reason: sticky_continuation (selected=pillar)");
-    expect(renderTsStatus(status)).toContain("limits: attempts=unavailable/3; tier-switches=unavailable/2");
+    expect(renderTsStatus(status)).toContain("last: sticky_continuation (selected pillar)");
+    expect(renderTsStatus(status)).not.toContain("limits:");
   });
 
   it("carries no paths, credentials, or raw errors anywhere in its output", () => {
@@ -389,7 +384,7 @@ describe("runStatusCommand — assembly and read-only behavior (hook 1)", () => 
     const [message, severity] = notify.mock.calls[0] ?? [];
     expect(severity).toBe("info");
     expect(String(message)).toContain("pi-tier-scheduler status");
-    expect(String(message)).toContain("selection: ts/auto");
+    expect(String(message)).toContain("(ts) auto • medium");
     // Read-only proof: the mutation and lookup surfaces were never touched.
     expect(spies.setModel).not.toHaveBeenCalled();
     expect(spies.setThinkingLevel).not.toHaveBeenCalled();

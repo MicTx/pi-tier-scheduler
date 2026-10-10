@@ -46,7 +46,7 @@ $ pi install npm:pi-tier-scheduler
 ### 从 GitHub
 
 ```sh
-$ pi install git:github.com/MicTx/pi-tier-scheduler@v0.4.1
+$ pi install git:github.com/MicTx/pi-tier-scheduler@v0.5.0
 ```
 
 `git:` 形式对任何可克隆的 git 远端都成立——公司 Gitea、自建服务或 fork 都行。用 `@<tag>` 钉版：后续更新只核对检出内容，不会移动钉死的 ref。认证走你 git 克隆该主机时本来就用的那套凭据；本包自身不保存任何密钥。`pi remove` 接同一个源。

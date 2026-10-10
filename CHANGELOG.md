@@ -2,6 +2,12 @@
 
 User-visible release history for `pi-tier-scheduler`. Dates are omitted until a release is tagged; the compatibility floor of each release is verified against the Pi extension API before shipping.
 
+## 0.5.0 — 2026-10-10
+
+### Changed
+
+- **Designed command surfaces** — `/ts status` reads in three beats (a story line matching the footer, one line of history, the tier table, one config line; routing/override/thinking collapse into the story, limits move to doctor); `/ts init` asks only what it must — straight catalog picks per tier with an explicit skip, policy and retry keep their defaults, `/ts config` stays the power surface; `/ts use` and `/ts auto` acknowledge in one line (`pinned: brain • high`).
+
 ## 0.4.1 — 2026-10-10
 
 ### Changed

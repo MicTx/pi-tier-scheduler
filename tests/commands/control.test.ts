@@ -240,7 +240,7 @@ describe("applyManualTier — the three-tier action sequence (§3.5, hooks 1–2
 
       expect(result).toEqual({
         ok: true,
-        message: `manual routing set to ${tier} (ts/auto thinking=${TIER_BIAS[tier]})`,
+        message: `pinned: ${tier} • ${TIER_BIAS[tier]}`,
         controlChanged: true,
       });
       expect(events).toEqual([
@@ -263,7 +263,7 @@ describe("applyManualTier — the three-tier action sequence (§3.5, hooks 1–2
 
     expect(result).toEqual({
       ok: true,
-      message: "manual routing set to brain (ts/auto thinking=high)",
+      message: "pinned: brain • high",
       controlChanged: false,
     });
     expect(events).toEqual(["setModel:ts/auto", "setThinkingLevel:high"]);
@@ -278,7 +278,7 @@ describe("applyManualTier — the three-tier action sequence (§3.5, hooks 1–2
 
     expect(result).toEqual({
       ok: true,
-      message: "manual routing set to crowd (ts/auto thinking=low)",
+      message: "pinned: crowd • low",
       controlChanged: true,
     });
     expect(actions.appendEntry).toHaveBeenCalledWith(CONTROL, {
@@ -303,7 +303,7 @@ describe("applyManualTier — the three-tier action sequence (§3.5, hooks 1–2
 
     expect(result).toEqual({
       ok: true,
-      message: "manual routing set to brain (ts/auto thinking=high)",
+      message: "pinned: brain • high",
       controlChanged: true,
     });
     expect(actions.appendEntry).toHaveBeenCalledTimes(1);
@@ -318,7 +318,7 @@ describe("applyAutomatic — /ts auto release semantics (§3.6, hook 3)", () => 
 
     expect(result).toEqual({
       ok: true,
-      message: "automatic routing enabled (bias=high)",
+      message: "auto routing • bias high",
       controlChanged: true,
     });
     expect(events).toEqual(["setModel:ts/auto", "setThinkingLevel:high", `appendEntry:${CONTROL}`]);
@@ -332,7 +332,7 @@ describe("applyAutomatic — /ts auto release semantics (§3.6, hook 3)", () => 
 
     expect(result).toEqual({
       ok: true,
-      message: "automatic routing enabled (bias=medium)",
+      message: "auto routing • bias medium",
       controlChanged: false,
     });
     expect(events).toEqual(["setModel:ts/auto", "setThinkingLevel:medium"]);
@@ -346,7 +346,7 @@ describe("applyAutomatic — /ts auto release semantics (§3.6, hook 3)", () => 
 
     expect(result).toEqual({
       ok: true,
-      message: "automatic routing enabled (bias=medium)",
+      message: "auto routing • bias medium",
       controlChanged: true,
     });
     expect(actions.appendEntry).toHaveBeenCalledWith(CONTROL, {
@@ -510,7 +510,7 @@ describe("zero-candidate tier — control accepts, the next route falls back (§
     const result = await applyManualTier("crowd", ctxOf({ branch }), actions);
 
     expect(result.ok).toBe(true);
-    expect(result.message).toBe("manual routing set to crowd (ts/auto thinking=low)");
+    expect(result.message).toBe("pinned: crowd • low");
 
     const message: Message = { role: "user", content: "implement a parser", timestamp: 0 };
     const request: RouteRequest = {
@@ -580,12 +580,12 @@ describe("setManualTier/releaseManualTier — serialization through the queue (�
     const [firstResult, secondResult] = await Promise.all([first, second]);
     expect(firstResult).toEqual({
       ok: true,
-      message: "manual routing set to brain (ts/auto thinking=high)",
+      message: "pinned: brain • high",
       controlChanged: true,
     });
     expect(secondResult).toEqual({
       ok: true,
-      message: "automatic routing enabled (bias=medium)",
+      message: "auto routing • bias medium",
       controlChanged: true,
     });
     expect(order).toEqual([
@@ -622,7 +622,7 @@ describe("setManualTier/releaseManualTier — serialization through the queue (�
     const next = await setManualTier("crowd", ctx, deps);
     expect(next).toEqual({
       ok: true,
-      message: "manual routing set to crowd (ts/auto thinking=low)",
+      message: "pinned: crowd • low",
       controlChanged: true,
     });
     expect(branch.entries).toEqual([controlEntry("crowd")]);
@@ -652,7 +652,7 @@ describe("setManualTier/releaseManualTier — serialization through the queue (�
     const result = await releaseManualTier(ctxOf({ branch }), deps);
     expect(result).toEqual({
       ok: true,
-      message: "automatic routing enabled (bias=high)",
+      message: "auto routing • bias high",
       controlChanged: true,
     });
     expect(actions.setThinkingLevel).toHaveBeenCalledWith("high");
@@ -666,7 +666,7 @@ describe("setManualTier/releaseManualTier — serialization through the queue (�
     const result = await releaseManualTier(ctxOf({ branch }), deps);
     expect(result).toEqual({
       ok: true,
-      message: "automatic routing enabled (bias=medium)",
+      message: "auto routing • bias medium",
       controlChanged: true,
     });
     expect(actions.setThinkingLevel).toHaveBeenCalledWith("medium");

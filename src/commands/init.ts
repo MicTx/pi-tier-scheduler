@@ -13,13 +13,11 @@ import { renderConfigPreview } from "../ui/config-render";
 import { buildCatalogPickGroups } from "../catalog/picker";
 import type { CatalogPickGroup } from "../catalog/picker";
 import {
-  choosePolicy,
-  chooseRetry,
   chooseScope,
   confirmEditExistingLayer,
   confirmReplaceInvalidLayer,
   confirmSave,
-  editTierCandidates,
+  pickTierCandidates,
 } from "../ui/config-dialogs";
 import type { ConfigDialogsContext } from "../ui/config-dialogs";
 import type { RespondContext, RespondSeverity } from "../ui/respond";
@@ -176,13 +174,11 @@ async function runInitWizard(
     draft = createInitDraft(defaultConfig());
   }
 
-  // Step 4 — tier candidates in the fixed brain → pillar → crowd order.
+  // Step 4 — tier picks in the fixed brain → pillar → crowd order: no
+  // action menu, straight into the catalog picker (manual entry stays as an
+  // explicit fallback), one confirm after each pick (0.5.0 redesign).
   for (const tier of TIER_ORDER) {
-    const tierStep = await editTierCandidates(
-      dialogs,
-      tier,
-      draft.tiers?.[tier]?.candidates ?? [],
-    );
+    const tierStep = await pickTierCandidates(dialogs, tier);
     if (!tierStep.ok) {
       cancelWith(ctx, deps, tierStep.reason);
       return;
@@ -194,35 +190,8 @@ async function runInitWizard(
     }
   }
 
-  // Step 5 — policy (07 §3.3 step 3).
-  const policyStep = await choosePolicy(dialogs, {
-    defaultBias: draft.policy?.defaultBias ?? defaultConfig().policy.defaultBias,
-    sticky: draft.policy?.sticky ?? defaultConfig().policy.sticky,
-  });
-  if (!policyStep.ok) {
-    cancelWith(ctx, deps, policyStep.reason);
-    return;
-  }
-  draft = setPolicyField(setPolicyField(draft, "defaultBias", policyStep.value.defaultBias), "sticky", policyStep.value.sticky);
-  if (deps.isRuntimeClosed()) {
-    cancelWith(ctx, deps, "closed");
-    return;
-  }
-
-  // Step 6 — retry bounds from the Phase 2 absolute enumerations.
-  const retryStep = await chooseRetry(dialogs, {
-    maxAttemptsPerRequest: draft.retry?.maxAttemptsPerRequest ?? defaultConfig().retry.maxAttemptsPerRequest,
-    maxTierSwitches: draft.retry?.maxTierSwitches ?? defaultConfig().retry.maxTierSwitches,
-  });
-  if (!retryStep.ok) {
-    cancelWith(ctx, deps, retryStep.reason);
-    return;
-  }
-  draft = setRetryField(
-    setRetryField(draft, "maxAttemptsPerRequest", retryStep.value.maxAttemptsPerRequest),
-    "maxTierSwitches",
-    retryStep.value.maxTierSwitches,
-  );
+  // Policy and retry keep the draft's (or default) values — /ts config is the
+  // surface that adjusts them; the wizard asks only what it must.
 
   // Authoritative validation before the preview (07 §4.5); the wizard's own
   // input bounds make this unreachable in practice — fail closed anyway.
