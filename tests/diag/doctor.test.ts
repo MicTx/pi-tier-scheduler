@@ -187,15 +187,16 @@ describe("buildDoctorReport — healthy snapshot", () => {
     expect(text).toBe(
       [
         "pi-tier-scheduler doctor",
-        "result: pass",
         "",
-        "check          status    summary",
-        "config         pass      effective schema=1; problems=0",
-        "catalog        pass      brain=1/1; pillar=1/1; crowd=1/1; unavailable=0",
-        "credentials    pass      configured=1; missing=0; unknown=0",
-        "router state   pass      schema=1; attempts=1/3; tier-switches=0/2",
-        "route log      pass      entries=12; malformed=0; write-failures=0",
-        "compatibility  pass      Pi 1.0.4; required API surface present",
+        "pass:",
+        "  config         effective schema=1; problems=0",
+        "  catalog        brain=1/1; pillar=1/1; crowd=1/1; unavailable=0",
+        "  credentials    configured=1; missing=0; unknown=0",
+        "  router state   schema=1; attempts=1/3; tier-switches=0/2",
+        "  route log      entries=12; malformed=0; write-failures=0",
+        "  compatibility  Pi 1.0.4; required API surface present",
+        "",
+        "result: pass · 6 checks · 0 error · 0 warning · 6 pass",
       ].join("\n"),
     );
   });
@@ -518,9 +519,9 @@ describe("buildDoctorReport — severity aggregation and stability", () => {
     snapshot.credentialProviders = [{ provider: "ghost", status: "missing" }];
     const text = renderDoctorReport(buildDoctorReport(snapshot));
     const lines = text.split("\n");
-    const credentialsIndex = lines.findIndex((line) => line.startsWith("credentials"));
-    expect(lines[credentialsIndex]).toBe("credentials    warning   configured=0; missing=1; unknown=0");
-    expect(lines[credentialsIndex + 1]).toBe("  provider_auth_missing: ghost");
+    const credentialsIndex = lines.findIndex((line) => line.trim().startsWith("credentials"));
+    expect(lines[credentialsIndex]).toBe("  credentials    configured=0; missing=1; unknown=0");
+    expect(lines[credentialsIndex + 1]).toBe("    provider_auth_missing: ghost");
   });
 
   it("contains no ANSI or control sequences", () => {

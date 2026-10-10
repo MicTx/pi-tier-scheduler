@@ -2,6 +2,13 @@
 
 User-visible release history for `pi-tier-scheduler`. Dates are omitted until a release is tagged; the compatibility floor of each release is verified against the Pi extension API before shipping.
 
+## 0.5.1 — 2026-10-10
+
+### Changed
+
+- **Doctor reports in the OCR-delegate grammar** — findings group by severity (errors first, then warnings, then passes) and a closing count line accounts for every check (`result: error · 6 checks · 1 error · 1 warning · 4 pass`).
+- **Wizard opens with a target preview** — before the first question, `/ts init` states the write target's state (`target: project layer (missing) — the wizard will create it with defaults`), mirroring preview-before-action delegation flows.
+
 ## 0.5.0 — 2026-10-10
 
 ### Changed

@@ -355,7 +355,7 @@ describe("dispatch — /ts routing", () => {
     const [message, severity] = doctorCtx.notify.mock.calls[0] ?? [];
     expect(severity).toBe("warning"); // the config fixture carries an empty crowd tier
     expect(String(message)).toContain("pi-tier-scheduler doctor");
-    expect(String(message)).toContain("config         pass      effective schema=1; problems=0");
+    expect(String(message)).toContain("config         effective schema=1; problems=0");
 
     // init reaches the real F7.1 handler: the scripted TUI ctx escapes at
     // the scope dialog, so the wizard ends with the stable cancel notice

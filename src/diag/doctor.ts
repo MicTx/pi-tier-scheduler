@@ -608,24 +608,44 @@ export function buildDoctorReport(snapshot: DoctorSnapshot): DoctorReport {
  * control sequences, no dynamic content beyond the already-bounded finding
  * fields.
  */
+/**
+ * Render the report in the OCR-delegate grammar: findings grouped by
+ * severity — errors first, then warnings, then passes — each group under a
+ * plain header, and a closing count line that accounts for every check.
+ * Grouping order is fixed regardless of how many findings each holds.
+ */
+const SEVERITY_SECTION: Readonly<Record<DoctorSeverity, string>> = {
+  error: "errors",
+  warning: "warnings",
+  pass: "pass",
+};
+
 export function renderDoctorReport(report: DoctorReport): string {
   const labelWidth = Math.max(
     "check".length,
     ...report.checks.map((finding) => (CHECK_LABELS[finding.code] ?? finding.code).length),
   );
-  const lines: string[] = [
-    "pi-tier-scheduler doctor",
-    `result: ${report.severity}`,
-    "",
-    `${"check".padEnd(labelWidth)}  status    summary`,
-  ];
-  for (const finding of report.checks) {
-    const label = CHECK_LABELS[finding.code] ?? finding.code;
-    lines.push(`${label.padEnd(labelWidth)}  ${finding.severity.padEnd(9)} ${finding.summary}`);
-    for (const detail of finding.details) {
-      lines.push(`  ${detail}`);
+  const counts: Record<DoctorSeverity, number> = { error: 0, warning: 0, pass: 0 };
+  for (const finding of report.checks) counts[finding.severity] += 1;
+
+  const lines: string[] = ["pi-tier-scheduler doctor", ""];
+  for (const severity of ["error", "warning", "pass"] as const) {
+    const group = report.checks.filter((finding) => finding.severity === severity);
+    if (group.length === 0) continue;
+    lines.push(SEVERITY_SECTION[severity] + ":");
+    for (const finding of group) {
+      const label = CHECK_LABELS[finding.code] ?? finding.code;
+      lines.push(`  ${label.padEnd(labelWidth)}  ${finding.summary}`);
+      for (const detail of finding.details) {
+        lines.push(`    ${detail}`);
+      }
     }
+    lines.push("");
   }
+  lines.push(
+    `result: ${report.severity} · ${report.checks.length} checks · `
+      + `${counts.error} error · ${counts.warning} warning · ${counts.pass} pass`,
+  );
   return lines.join("\n");
 }
 

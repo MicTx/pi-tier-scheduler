@@ -164,6 +164,12 @@ async function runInitWizard(
     }
     draft = structuredClone(layer.value);
   } else if (layer.status === "missing") {
+    // OCR-delegate preview trait: state the write target before any question.
+    deps.respond(
+      ctx,
+      `target: ${scope} layer (missing) — the wizard will create it with defaults`,
+      "info",
+    );
     draft = createInitDraft(defaultConfig());
   } else {
     const replaceStep = await confirmReplaceInvalidLayer(dialogs, layer);

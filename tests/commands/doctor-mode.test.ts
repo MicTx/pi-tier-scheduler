@@ -161,7 +161,7 @@ describe("dispatch('doctor') — mode-safe response channel (hook 5)", () => {
     const text = String(message);
     expect(text).toContain("pi-tier-scheduler doctor");
     expect(text).toContain("result: pass");
-    expect(text).toContain("compatibility  pass      Pi 1.0.4; required API surface present");
+    expect(text).toContain("compatibility  Pi 1.0.4; required API surface present");
     expect(text).not.toContain(SECRET);
   });
 

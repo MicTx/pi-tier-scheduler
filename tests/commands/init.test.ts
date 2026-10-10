@@ -445,7 +445,10 @@ describe("/ts init — cancellation matrix (hook 5)", () => {
       { input: "bad\u0000provider" },
     ]);
     await handleInit("", face.ctx, deps);
-    expect(responses).toEqual([{ message: CONFIG_CANCELLED_NOTICE, severity: "warning" }]);
+    expect(responses).toEqual([
+      { message: "target: project layer (missing) — the wizard will create it with defaults", severity: "info" },
+      { message: CONFIG_CANCELLED_NOTICE, severity: "warning" },
+    ]);
     expect(await readTarget("project")).toBeUndefined();
   });
 
@@ -482,7 +485,10 @@ describe("/ts init — cancellation matrix (hook 5)", () => {
     const { deps, responses, runtime } = makeDeps({ saveOverride });
     const face = makeCtx(happyPath("missing").slice(0, -1).concat([{ confirm: false }]));
     await handleInit("", face.ctx, deps);
-    expect(responses).toEqual([{ message: CONFIG_CANCELLED_NOTICE, severity: "info" }]);
+    expect(responses).toEqual([
+      { message: "target: project layer (missing) — the wizard will create it with defaults", severity: "info" },
+      { message: CONFIG_CANCELLED_NOTICE, severity: "info" },
+    ]);
     expect(saves).toBe(0);
     expect(await readTarget("project")).toBeUndefined();
     expect(runtime.revision).toBeUndefined();
