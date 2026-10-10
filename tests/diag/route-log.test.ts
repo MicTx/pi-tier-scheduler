@@ -461,7 +461,7 @@ describe("renderRouteLogEntry — compact redacted line (hook 5)", () => {
         attempt: 2,
         maxAttempts: 3,
       })),
-    ).toBe("route retry_same_tier: anthropic/sonnet (attempt 2/3)");
+    ).toBe("→ sonnet • medium");
   });
 
   it("renders terminals and aborts without a candidate", () => {
@@ -473,7 +473,7 @@ describe("renderRouteLogEntry — compact redacted line (hook 5)", () => {
         attempt: 3,
         maxAttempts: 3,
       })),
-    ).toBe("route no_eligible_physical_model: no candidate (attempt 3/3)");
+    ).toBe("route no candidate");
     expect(
       renderRouteLogEntry(entry({
         outcome: "aborted",
@@ -481,7 +481,7 @@ describe("renderRouteLogEntry — compact redacted line (hook 5)", () => {
         selectedCandidate: undefined,
         attempt: 1,
       })),
-    ).toBe("route route_limit_exceeded: aborted (attempt 1/3)");
+    ).toBe("route aborted");
   });
 
   it("emits only stable fields: injected samples never reach the line", () => {

@@ -2,6 +2,13 @@
 
 User-visible release history for `pi-tier-scheduler`. Dates are omitted until a release is tagged; the compatibility floor of each release is verified against the Pi extension API before shipping.
 
+## 0.4.1 — 2026-10-10
+
+### Changed
+
+- **Elegant live routing surfaces** — the inline route line is now `→ glm-5.3 • high` (reason, attempts, and fallback details stay in the structured record and `/ts status`); the footer composition is `(ts) auto • high → glm-5.3 • high`, updating the moment a route decision lands.
+- **Breathing active dot** — while a turn is in flight the footer leads with a size-breathing dot (`˙ · • ● • ·`); it settles back to the static line when the turn ends.
+
 ## 0.4.0 — 2026-10-09
 
 ### Added

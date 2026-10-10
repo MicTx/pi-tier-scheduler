@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  breathingFooterText,
   clearFooterStatus,
+  FOOTER_BREATH_FRAMES,
   footerText,
   FOOTER_STATUS_KEY,
   refreshFooterStatus,
@@ -21,9 +23,14 @@ function ctx(mode: "tui" | "rpc" | "json" | "print", setStatus = vi.fn()): Foote
 
 describe("footerText", () => {
   it("renders the canonical auto and manual shapes", () => {
-    expect(footerText(null, "medium")).toBe("ts:auto/medium");
-    expect(footerText("brain", "high")).toBe("ts:brain/high");
-    expect(footerText("crowd", "low")).toBe("ts:crowd/low");
+    expect(footerText(null, "medium")).toBe("(ts) auto • medium");
+    expect(footerText("brain", "high")).toBe("(ts) brain • high");
+    expect(footerText(null, "high", { modelId: "glm-5.3", thinkingLevel: "high" })).toBe(
+      "(ts) auto • high → glm-5.3 • high",
+    );
+    expect(footerText(null, "high", { modelId: "glm-5.3" })).toBe("(ts) auto • high → glm-5.3");
+    expect(footerText("brain", "high")).toBe("(ts) brain • high");
+    expect(footerText("crowd", "low")).toBe("(ts) crowd • low");
   });
 
   it("uses the one stable status key", () => {
@@ -38,7 +45,7 @@ describe("refreshFooterStatus", () => {
     const face = ctx("tui");
     expect(refreshFooterStatus(face, input)).toBe(true);
     expect(face.ui.setStatus).toHaveBeenCalledTimes(1);
-    expect(face.ui.setStatus).toHaveBeenCalledWith("tier-scheduler", "ts:auto/medium");
+    expect(face.ui.setStatus).toHaveBeenCalledWith("tier-scheduler", "(ts) auto • medium");
   });
 
   it.each(["rpc", "json", "print"] as const)("%s never touches setStatus", (mode) => {
@@ -87,5 +94,17 @@ describe("clearFooterStatus", () => {
       throw new Error("gone");
     });
     expect(clearFooterStatus(ctx("tui", boom), true)).toBe(false);
+  });
+});
+
+describe("breathingFooterText — the active dot", () => {
+  it("prefixes the frame and keeps the composition stable", () => {
+    const dispatch = { modelId: "glm-5.3", thinkingLevel: "high" };
+    expect(breathingFooterText("●", null, "high", dispatch)).toBe("● (ts) auto • high → glm-5.3 • high");
+    expect(breathingFooterText("˙", "brain", "high", dispatch)).toBe("˙ (ts) brain • high → glm-5.3 • high");
+  });
+
+  it("breathes through size-graded frames and back", () => {
+    expect(FOOTER_BREATH_FRAMES).toEqual(["˙", "·", "•", "●", "•", "·"]);
   });
 });

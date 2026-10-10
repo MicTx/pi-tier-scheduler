@@ -192,7 +192,7 @@ describe("F7.2 footer status lifecycle", () => {
     return { ctx: shape as unknown as ExtensionContext, setStatus };
   }
 
-  it("session_start sets ts:auto/medium in tui; rpc sets no status", async () => {
+  it("session_start sets (ts) auto • medium in tui; rpc sets no status", async () => {
     const { root, agentDir } = await makeWorkspace();
     try {
       const host = createFakeHost();
@@ -200,7 +200,7 @@ describe("F7.2 footer status lifecycle", () => {
       const tui = footerSessionCtx("tui", root);
       host.fire("session_start", tui.ctx);
       expect(tui.setStatus).toHaveBeenCalledTimes(1);
-      expect(tui.setStatus).toHaveBeenCalledWith("tier-scheduler", "ts:auto/medium");
+      expect(tui.setStatus).toHaveBeenCalledWith("tier-scheduler", "(ts) auto • medium");
       expect(mod.getRuntimeState()?.footerStatusSet).toBe(true);
 
       // A fresh module instance in rpc mode: the same start stays silent on
@@ -236,7 +236,7 @@ describe("F7.2 footer status lifecycle", () => {
       };
       await host.command().handler("use brain", useCtx.ctx);
       const useStatus = (useCtx.ctx as unknown as { ui: { setStatus: ReturnType<typeof vi.fn> } }).ui.setStatus;
-      expect(useStatus).toHaveBeenCalledWith("tier-scheduler", "ts:brain/high");
+      expect(useStatus).toHaveBeenCalledWith("tier-scheduler", "(ts) brain • high");
 
       // An empty branch is already automatic: the release appends nothing
       // and the footer shows the effective default bias.
@@ -247,7 +247,7 @@ describe("F7.2 footer status lifecycle", () => {
       };
       await host.command().handler("auto", autoCtx.ctx);
       const autoStatus = (autoCtx.ctx as unknown as { ui: { setStatus: ReturnType<typeof vi.fn> } }).ui.setStatus;
-      expect(autoStatus).toHaveBeenCalledWith("tier-scheduler", "ts:auto/medium");
+      expect(autoStatus).toHaveBeenCalledWith("tier-scheduler", "(ts) auto • medium");
     } finally {
       await rm(root, { recursive: true, force: true });
       await rm(agentDir, { recursive: true, force: true });
@@ -282,7 +282,7 @@ describe("F7.2 footer status lifecycle", () => {
       host.fire("thinking_level_select", session.ctx);
       expect(session.setStatus).toHaveBeenCalledTimes(3);
       // Every refresh rewrites the same bounded text — the last call included.
-      expect(session.setStatus).toHaveBeenLastCalledWith("tier-scheduler", "ts:auto/medium");
+      expect(session.setStatus).toHaveBeenLastCalledWith("tier-scheduler", "(ts) auto • medium");
     } finally {
       await rm(root, { recursive: true, force: true });
       await rm(agentDir, { recursive: true, force: true });
@@ -300,7 +300,7 @@ describe("F7.2 footer status lifecycle", () => {
       await vi.waitFor(() => {
         expect(mod.getRuntimeState()?.configLoad).toBeDefined();
       });
-      expect(session.setStatus).toHaveBeenLastCalledWith("tier-scheduler", "ts:auto/medium");
+      expect(session.setStatus).toHaveBeenLastCalledWith("tier-scheduler", "(ts) auto • medium");
 
       const face = wizardCtx(root, [
         { select: "edit project layer" },
@@ -319,7 +319,7 @@ describe("F7.2 footer status lifecycle", () => {
       expect(mod.getRuntimeState()?.configRevision).toBe(2);
       // The post-reload refresh runs through the session's footer sink and
       // carries the new effective bias (07 §5.6).
-      expect(session.setStatus).toHaveBeenLastCalledWith("tier-scheduler", "ts:auto/low");
+      expect(session.setStatus).toHaveBeenLastCalledWith("tier-scheduler", "(ts) auto • low");
     } finally {
       await rm(root, { recursive: true, force: true });
       await rm(agentDir, { recursive: true, force: true });
@@ -1372,7 +1372,7 @@ describe("route adapter — F6.2 route-decision log", () => {
       };
       const valid = renderer({ data: record }, { expanded: true });
       expect(valid).toBeDefined();
-      expect(valid!.render(80).join("\n")).toContain("route work_phase: acme/pillar-1 (attempt 1/3)");
+      expect(valid!.render(80).join("\n")).toContain("→ pillar-1 • medium");
       expect(renderer({ data: "garbage" }, { expanded: true })).toBeUndefined();
     } finally {
       await rm(root, { recursive: true, force: true });

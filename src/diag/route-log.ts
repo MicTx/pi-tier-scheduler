@@ -387,17 +387,18 @@ export function appendRouteLog(entry: RouteLogEntry, sink: RouteLogSink): void {
 }
 
 /**
- * One compact, stable line for the optional TUI renderer and exports, e.g.
- * `route retry_same_tier: anthropic/sonnet (attempt 2/3)`. Only fields that
- * are already part of the validated record are rendered; outcome suffixes
- * distinguish terminals and aborts, and no free text ever reaches the line.
+ * One compact, stable line for the optional TUI renderer and exports — the
+ * elegant form that matches the footer: `→ glm-5.3 • high`. Diagnostics
+ * (reason, attempts, fallback path) stay in the structured record for
+ * `/ts status` and exports; the line shows only the routed model and its
+ * thinking level. Only fields that are already part of the validated
+ * record are rendered, and no free text ever reaches the line.
  */
 export function renderRouteLogEntry(entry: RouteLogEntry): string {
-  const target =
-    entry.selectedCandidate !== undefined
-      ? `${entry.selectedCandidate.provider}/${entry.selectedCandidate.id}`
-      : entry.outcome === "aborted"
-        ? "aborted"
-        : "no candidate";
-  return `route ${entry.reasonCode}: ${target} (attempt ${entry.attempt}/${entry.maxAttempts})`;
+  if (entry.selectedCandidate === undefined) {
+    return entry.outcome === "aborted" ? "route aborted" : "route no candidate";
+  }
+  return entry.selectedThinking === undefined
+    ? `→ ${entry.selectedCandidate.id}`
+    : `→ ${entry.selectedCandidate.id} • ${entry.selectedThinking}`;
 }

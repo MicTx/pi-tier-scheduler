@@ -93,7 +93,7 @@ function fakeCtx(mode: SessionMode, hasUI: boolean) {
 }
 
 describe("extension factory — registration surface", () => {
-  it("registers ts/auto, the ms command, and the four lifecycle/selection hooks, with no output", () => {
+  it("registers ts/auto, the ms command, and the six lifecycle/selection/turn hooks, with no output", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const stdoutWrite: MockInstance<typeof process.stdout.write> = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
     const host = createFakeHost();
@@ -120,7 +120,7 @@ describe("extension factory — registration surface", () => {
         handler: expect.any(Function),
       }),
     );
-    expect(host.on).toHaveBeenCalledTimes(4);
+    expect(host.on).toHaveBeenCalledTimes(6);
     expect(host.on).toHaveBeenCalledWith("session_start", expect.any(Function));
     expect(host.on).toHaveBeenCalledWith("session_shutdown", expect.any(Function));
     // F7.2: the footer refresh hooks on selection events (07 §3.8).

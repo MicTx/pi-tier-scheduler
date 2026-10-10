@@ -45,7 +45,15 @@ import type { LastDispatchSummary } from "./commands/types";
 import { TIER_BIAS } from "./commands/control";
 import { COMMAND_NAME } from "./shared/constants";
 import { completeArguments, dispatch, type TsDispatchDependencies } from "./commands/dispatch";
-import { clearFooterStatus, refreshFooterStatus, type FooterStatusContext } from "./ui/status";
+import {
+  breathingFooterText,
+  clearFooterStatus,
+  FOOTER_BREATH_FRAMES,
+  FOOTER_STATUS_KEY,
+  refreshFooterStatus,
+  type FooterDispatch,
+  type FooterStatusContext,
+} from "./ui/status";
 import { respond } from "./ui/respond";
 
 /**
@@ -295,6 +303,9 @@ function recordLastDispatch(
   const state = runtimeState;
   if (state === null || state.shutdownAt !== null) return;
   state.lastDispatch = summarizeDispatch(decision, configReady);
+  // The footer learns the routed model the moment the decision lands; the
+  // breathing dot (if a turn is in flight) keeps animating on top of it.
+  refreshRuntimeFooter();
 }
 
 // ---------------------------------------------------------------------------
@@ -627,13 +638,21 @@ function branchEntriesOf(
 function footerInputOf(
   state: SessionRuntimeState,
   ctx: Pick<ExtensionContext | ExtensionCommandContext, "sessionManager">,
-): { manualOverride: TierName | null; bias: ThinkingBias } {
+): { manualOverride: TierName | null; bias: ThinkingBias; dispatch?: FooterDispatch } {
   const override = readLatestRouterControl(branchEntriesOf(ctx)).manualOverride;
   const bias =
     override !== null
       ? TIER_BIAS[override]
       : (state.configLoad?.effective.policy.defaultBias ?? defaultConfig().policy.defaultBias);
-  return { manualOverride: override, bias };
+  const last = state.lastDispatch;
+  return {
+    manualOverride: override,
+    bias,
+    dispatch:
+      last === undefined
+        ? undefined
+        : { modelId: last.model.id, thinkingLevel: last.thinkingLevel },
+  };
 }
 
 /**
@@ -671,6 +690,53 @@ function refreshRuntimeFooter(): void {
  * session_start — a new session owns its own status key.
  */
 let footerSink: Pick<ExtensionContext, "mode" | "ui" | "sessionManager"> | null = null;
+
+/** Breathing-dot cadence (ms) while a turn is in flight. */
+const FOOTER_BREATH_INTERVAL_MS = 700;
+
+/** The active-turn footer animator; TUI-only, one interval per runtime. */
+let footerBreathTimer: ReturnType<typeof setInterval> | undefined;
+
+function writeBreathingFooter(frame: string): void {
+  const sink = footerSink;
+  const state = runtimeState;
+  if (sink === null || state === null || state.shutdownAt !== null) return;
+  if ((sink.mode as FooterStatusContext["mode"]) !== "tui") return;
+  const input = footerInputOf(state, sink);
+  try {
+    sink.ui.setStatus(
+      FOOTER_STATUS_KEY,
+      breathingFooterText(frame, input.manualOverride, input.bias, input.dispatch),
+    );
+    state.footerStatusSet = true;
+  } catch {
+    // A failing setStatus never breaks the animator or the route path.
+  }
+}
+
+function startFooterBreathing(): void {
+  if (footerBreathTimer !== undefined || footerSink === null) return;
+  if ((footerSink.mode as FooterStatusContext["mode"]) !== "tui") return;
+  let index = 0;
+  footerBreathTimer = setInterval(() => {
+    const state = runtimeState;
+    if (state === null || state.shutdownAt !== null) {
+      stopFooterBreathing();
+      return;
+    }
+    writeBreathingFooter(FOOTER_BREATH_FRAMES[index % FOOTER_BREATH_FRAMES.length]!);
+    index += 1;
+  }, FOOTER_BREATH_INTERVAL_MS);
+}
+
+function stopFooterBreathing(refresh = true): void {
+  if (footerBreathTimer !== undefined) {
+    clearInterval(footerBreathTimer);
+    footerBreathTimer = undefined;
+  }
+  // On shutdown the clear below owns the status bar — no final write.
+  if (refresh) refreshRuntimeFooter();
+}
 
 /** Extension entry point: registration only — no side effects, no noise. */
 export default function extension(pi: ExtensionAPI): void {
@@ -769,7 +835,16 @@ export default function extension(pi: ExtensionAPI): void {
   pi.on("thinking_level_select", () => {
     refreshRuntimeFooter();
   });
+  // The breathing dot: a turn in flight animates the footer's leading dot
+  // through ˙·•●•·; the turn ending settles it back to the static line.
+  pi.on("turn_start", () => {
+    startFooterBreathing();
+  });
+  pi.on("turn_end", () => {
+    stopFooterBreathing();
+  });
   pi.on("session_shutdown", (event, ctx) => {
+    stopFooterBreathing(false);
     virtualModel.unregister();
     handleSessionShutdown(event, ctx);
   });

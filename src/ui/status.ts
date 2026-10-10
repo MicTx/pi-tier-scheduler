@@ -26,13 +26,46 @@ export type FooterStatusContext = {
 export type FooterStatusInput = {
   manualOverride: ManualTier | null;
   bias: ThinkingBias;
+  /** Latest dispatch: routed model id and its clamped thinking level. */
+  dispatch?: FooterDispatch;
   /** False once the runtime is closed — no footer write after shutdown (§5.8). */
   live: boolean;
 };
 
-/** `ts:auto/medium` / `ts:brain/high` — tier or auto, then bias (§3.8). */
-export function footerText(manualOverride: ManualTier | null, bias: ThinkingBias): string {
-  return `ts:${manualOverride ?? "auto"}/${bias}`;
+/** The dispatched model as the footer shows it: id only, plus its level. */
+export type FooterDispatch = {
+  modelId: string;
+  thinkingLevel?: string;
+};
+
+/** `(ts) auto • high` — selection and bias; `→ model • level` once routed. */
+export function footerText(
+  manualOverride: ManualTier | null,
+  bias: ThinkingBias,
+  dispatch?: FooterDispatch,
+): string {
+  const base = `(ts) ${manualOverride ?? "auto"} • ${bias}`;
+  if (dispatch === undefined) return base;
+  return dispatch.thinkingLevel === undefined
+    ? `${base} → ${dispatch.modelId}`
+    : `${base} → ${dispatch.modelId} • ${dispatch.thinkingLevel}`;
+}
+
+/**
+ * Breathing frames for the active dot (TUI only): a point growing and
+ * shrinking — `˙ · • ● • ·` — cycled by the runtime animator while a turn
+ * is in flight; the idle footer carries no dot.
+ */
+export const FOOTER_BREATH_FRAMES: readonly string[] = ["˙", "·", "•", "●", "•", "·"];
+
+/** The active footer line: breathing frame, then the static composition. */
+export function breathingFooterText(
+  frame: string,
+  manualOverride: ManualTier | null,
+  bias: ThinkingBias,
+  dispatch?: FooterDispatch,
+): string {
+  return `${frame} ${footerText(manualOverride, bias, dispatch)}`;
 }
 
 /**
@@ -47,7 +80,10 @@ export function refreshFooterStatus(
 ): boolean {
   if (ctx.mode !== "tui" || !input.live) return false;
   try {
-    ctx.ui.setStatus(FOOTER_STATUS_KEY, footerText(input.manualOverride, input.bias));
+    ctx.ui.setStatus(
+      FOOTER_STATUS_KEY,
+      footerText(input.manualOverride, input.bias, input.dispatch),
+    );
     return true;
   } catch {
     return false;

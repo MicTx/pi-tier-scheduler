@@ -570,7 +570,7 @@ describe("mode matrix — session_start silence (real extension, hook 4)", () =>
     if (mode === "tui") {
       // The one sanctioned startup surface (F7.2 footer, §5.7 "TUI status").
       expect(face.ui.setStatus).toHaveBeenCalledTimes(1);
-      expect(face.ui.setStatus).toHaveBeenCalledWith(FOOTER_STATUS_KEY, "ts:auto/medium");
+      expect(face.ui.setStatus).toHaveBeenCalledWith(FOOTER_STATUS_KEY, "(ts) auto • medium");
     } else {
       expect(face.ui.setStatus, `mode=${mode}: rpc/json/print never see setStatus`).not.toHaveBeenCalled();
     }
@@ -621,7 +621,7 @@ describe("mode matrix — session_start silence (real extension, hook 4)", () =>
     if (mode === "tui") {
       // Exactly one set then one clear; the second shutdown clears nothing.
       expect(face.ui.setStatus.mock.calls).toEqual([
-        [FOOTER_STATUS_KEY, "ts:auto/medium"],
+        [FOOTER_STATUS_KEY, "(ts) auto • medium"],
         [FOOTER_STATUS_KEY, undefined],
       ]);
     } else {
