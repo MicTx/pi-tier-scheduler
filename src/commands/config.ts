@@ -6,8 +6,8 @@ import { validateConfigLayer } from "../config/schema";
 import type { ConfigFile, LoadResult } from "../config/types";
 import type { ConfigScope, EditableConfigLayer } from "../config/layer-read";
 import { buildConfigView, renderConfigView } from "../ui/config-render";
-import { buildCatalogPickList } from "../catalog/picker";
-import type { CatalogPickOption } from "../catalog/picker";
+import { buildCatalogPickGroups } from "../catalog/picker";
+import type { CatalogPickGroup } from "../catalog/picker";
 import { chooseConfigMainMenu, runConfigEditor } from "../ui/config-dialogs";
 import type { ConfigDialogsContext } from "../ui/config-dialogs";
 import type { RespondContext, RespondSeverity } from "../ui/respond";
@@ -60,9 +60,9 @@ function effectiveBaseline(deps: ConfigCommandDependencies): LoadResult["effecti
 }
 
 /** Catalog pick options from the live registry; absent on any failure (spec §2.2). */
-function catalogOf(ctx: ExtensionCommandContext): { catalog?: readonly CatalogPickOption[] } {
+function catalogOf(ctx: ExtensionCommandContext): { catalog?: readonly CatalogPickGroup[] } {
   try {
-    const catalog = buildCatalogPickList(ctx.modelRegistry);
+    const catalog = buildCatalogPickGroups(ctx.modelRegistry);
     return catalog.length > 0 ? { catalog } : {};
   } catch {
     return {};

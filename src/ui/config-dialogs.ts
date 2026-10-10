@@ -19,7 +19,7 @@ import type {
   ThinkingBias,
 } from "../config/types";
 import type { ConfigScope, EditableConfigLayer } from "../config/layer-read";
-import type { CatalogPickOption } from "../catalog/picker";
+import type { CatalogPickGroup } from "../catalog/picker";
 import { renderConfigPreview } from "./config-render";
 
 /**
@@ -68,12 +68,13 @@ export type ConfigDialogsContext = {
   /** Runtime-closed observation, checked between steps (07 §3.4/§5.8). */
   isClosed(): boolean;
   /**
-   * Catalog-driven pick options read from Pi's model registry (spec:
-   * catalog-driven-candidate-picker). Absent or empty when the registry is
-   * unavailable — the ADD path then falls back to manual entry, exactly as
-   * in the 0.2.0 flow.
+   * Catalog-driven pick groups read from Pi's model registry (spec:
+   * catalog-driven-candidate-picker; 0.3.2: credential-filtered,
+   * provider-grouped). Absent or empty when the registry is unavailable —
+   * the ADD path then falls back to manual entry, exactly as in the 0.2.0
+   * flow.
    */
-  catalog?: readonly CatalogPickOption[];
+  catalog?: readonly CatalogPickGroup[];
 };
 
 /** Step outcome: a value, or one uniform cancellation reason. */
@@ -180,30 +181,79 @@ async function askValidatedInput(
 
 /**
  * Add one candidate to a tier: catalog pick when the registry snapshot is
- * available and has entries the tier does not hold yet; manual entry stays
- * as the explicit fallback for models the registry does not list.
+ * available; manual entry stays as the explicit fallback for models the
+ * registry does not list. Navigation is two-level (provider → model) so a
+ * large catalog never overflows the select dialog, which does not scroll.
  */
+const MANUAL_ENTRY_ACTION = "Enter manually…";
+
+/** Provider groups with the tier's already-picked models removed. */
+function pickableGroups(
+  ctx: ConfigDialogsContext,
+  list: readonly CandidateRef[],
+): CatalogPickGroup[] {
+  return (ctx.catalog ?? [])
+    .map((group) => ({
+      provider: group.provider,
+      models: group.models.filter(
+        (option) => !list.some((c) => c.provider === option.ref.provider && c.id === option.ref.id),
+      ),
+    }))
+    .filter((group) => group.models.length > 0);
+}
+
+/** Pick one model inside a provider group; `back…` returns to the provider
+ *  dialog when there was one. */
+async function pickModelOfProvider(
+  ctx: ConfigDialogsContext,
+  tier: TierName,
+  group: CatalogPickGroup,
+  allowBack: boolean,
+): Promise<{ kind: "back" } | { kind: "done"; result: DialogFlowOutcome<CandidateRef> }> {
+  const options = [...group.models.map((m) => m.label), MANUAL_ENTRY_ACTION];
+  if (allowBack) options.push("back…");
+  const pick = await ctx.ui.select(
+    `add a candidate to ${tier} — ${group.provider}`,
+    options,
+    dialogOpts(ctx),
+  );
+  if (pick === undefined) return { kind: "done", result: cancelled() };
+  if (pick === MANUAL_ENTRY_ACTION) {
+    return { kind: "done", result: await askCandidatePair(ctx, tier, []) };
+  }
+  if (pick === "back…") return { kind: "back" };
+  const option = group.models.find((m) => m.label === pick);
+  return option
+    ? { kind: "done", result: { ok: true, value: { provider: option.ref.provider, id: option.ref.id } } }
+    : { kind: "done", result: await askCandidatePair(ctx, tier, []) };
+}
+
 async function addCandidate(
   ctx: ConfigDialogsContext,
   tier: TierName,
   list: readonly CandidateRef[],
 ): Promise<DialogFlowOutcome<CandidateRef>> {
-  const catalog = (ctx.catalog ?? []).filter(
-    (option) => !list.some((c) => c.provider === option.ref.provider && c.id === option.ref.id),
-  );
-  if (catalog.length === 0) return askCandidatePair(ctx, tier, list);
-  const manualAction = "Enter manually…";
-  const pick = await ctx.ui.select(
-    `add a candidate to ${tier} — pick a model`,
-    [...catalog.map((o) => o.label), manualAction],
-    dialogOpts(ctx),
-  );
-  if (pick === undefined) return cancelled();
-  if (pick === manualAction) return askCandidatePair(ctx, tier, list);
-  const option = catalog.find((o) => o.label === pick);
-  return option
-    ? { ok: true, value: { provider: option.ref.provider, id: option.ref.id } }
-    : askCandidatePair(ctx, tier, list);
+  const groups = pickableGroups(ctx, list);
+  if (groups.length === 0) return askCandidatePair(ctx, tier, list);
+  if (groups.length === 1) {
+    const outcome = await pickModelOfProvider(ctx, tier, groups[0]!, false);
+    return outcome.kind === "back" ? cancelled() : outcome.result;
+  }
+  for (;;) {
+    if (ctx.isClosed()) return closed();
+    const providerPick = await ctx.ui.select(
+      `add a candidate to ${tier} — pick a provider`,
+      [...groups.map((g) => g.provider), MANUAL_ENTRY_ACTION],
+      dialogOpts(ctx),
+    );
+    if (providerPick === undefined) return cancelled();
+    if (providerPick === MANUAL_ENTRY_ACTION) return askCandidatePair(ctx, tier, list);
+    const group = groups.find((g) => g.provider === providerPick);
+    if (!group) continue;
+    const outcome = await pickModelOfProvider(ctx, tier, group, true);
+    if (outcome.kind === "back") continue;
+    return outcome.result;
+  }
 }
 
 /** Step 1: choose the target scope; `project` is the first option (07 §3.2). */

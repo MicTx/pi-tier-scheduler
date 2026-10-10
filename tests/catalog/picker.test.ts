@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCatalogPickList, type CatalogPickerRegistry } from "../../src/catalog/picker";
+import { buildCatalogPickGroups, type CatalogPickerRegistry } from "../../src/catalog/picker";
 
 /**
- * Catalog picker unit tests (spec: catalog-driven-candidate-picker): pure
- * mapping from a narrow fake registry to sorted, labeled pick options.
+ * Catalog picker unit tests (catalog-driven-candidate-picker; 0.3.2
+ * refinements): pure mapping from a narrow fake registry to credential-
+ * filtered, provider-grouped pick options.
  */
 
 interface FakeModel {
@@ -29,51 +30,57 @@ function fakeRegistry(
   };
 }
 
-describe("buildCatalogPickList", () => {
-  it("sorts by provider then id and maps refs", () => {
-    const options = buildCatalogPickList(
+describe("buildCatalogPickGroups", () => {
+  it("groups by provider, sorted, with models sorted by id", () => {
+    const groups = buildCatalogPickGroups(
       fakeRegistry([
         { provider: "zeta", id: "fast" },
         { provider: "acme", id: "balanced" },
         { provider: "acme", id: "alpha" },
       ]),
     );
-    expect(options.map((o) => `${o.ref.provider}/${o.ref.id}`)).toEqual([
-      "acme/alpha",
-      "acme/balanced",
-      "zeta/fast",
-    ]);
+    expect(groups.map((g) => g.provider)).toEqual(["acme", "zeta"]);
+    expect(groups[0]!.models.map((m) => m.ref.id)).toEqual(["alpha", "balanced"]);
+    expect(groups[1]!.models.map((m) => m.ref.id)).toEqual(["fast"]);
   });
 
-  it("labels context window, reasoning, and missing credentials", () => {
-    const options = buildCatalogPickList(
+  it("filters providers without credentials entirely", () => {
+    const groups = buildCatalogPickGroups(
       fakeRegistry(
         [
-          { provider: "acme", id: "big", contextWindow: 200000, reasoning: true },
-          { provider: "acme", id: "small", contextWindow: 8000 },
+          { provider: "acme", id: "big" },
           { provider: "beta", id: "plain" },
         ],
         { beta: { configured: false } },
       ),
     );
-    const byLabel = new Map(options.map((o) => [o.ref.id, o.label]));
-    expect(byLabel.get("big")).toBe("acme/big · 200k ctx · reasoning");
-    expect(byLabel.get("small")).toBe("acme/small · 8k ctx");
-    expect(byLabel.get("plain")).toBe("beta/plain · no key");
+    expect(groups.map((g) => g.provider)).toEqual(["acme"]);
   });
 
-  it("excludes our own virtual namespace (ts) from the pick list", () => {
-    const options = buildCatalogPickList(
+  it("labels carry context window and reasoning, not the provider or auth state", () => {
+    const groups = buildCatalogPickGroups(
+      fakeRegistry([
+        { provider: "acme", id: "big", contextWindow: 200000, reasoning: true },
+        { provider: "acme", id: "small", contextWindow: 8000 },
+        { provider: "acme", id: "plain" },
+      ]),
+    );
+    const labels = groups[0]!.models.map((m) => m.label);
+    expect(labels).toEqual(["big · 200k ctx · reasoning", "plain", "small · 8k ctx"]);
+  });
+
+  it("excludes our own virtual namespace (ts) from the pick groups", () => {
+    const groups = buildCatalogPickGroups(
       fakeRegistry([
         { provider: "ts", id: "auto" },
         { provider: "acme", id: "real" },
       ]),
     );
-    expect(options.map((o) => o.ref.id)).toEqual(["real"]);
+    expect(groups.map((g) => g.provider)).toEqual(["acme"]);
   });
 
-  it("returns an empty list for an empty registry", () => {
-    expect(buildCatalogPickList(fakeRegistry([]))).toEqual([]);
+  it("returns an empty group list for an empty registry", () => {
+    expect(buildCatalogPickGroups(fakeRegistry([]))).toEqual([]);
   });
 
   it("propagates registry exceptions to the caller", () => {
@@ -85,6 +92,6 @@ describe("buildCatalogPickList", () => {
         return { configured: true };
       },
     };
-    expect(() => buildCatalogPickList(boom)).toThrowError("registry exploded");
+    expect(() => buildCatalogPickGroups(boom)).toThrowError("registry exploded");
   });
 });

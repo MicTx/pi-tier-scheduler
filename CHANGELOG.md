@@ -2,6 +2,13 @@
 
 User-visible release history for `pi-tier-scheduler`. Dates are omitted until a release is tagged; the compatibility floor of each release is verified against the Pi extension API before shipping.
 
+## 0.3.2 — 2026-10-09
+
+### Fixed
+
+- **Picker shows only credentialed models** — providers without a working key no longer appear in the candidate picker; routing filters them at request time anyway, so offering them was noise. Manual entry remains for pre-configuration.
+- **Two-level picker navigation** — pick the provider first, then the model. A flat model list overflowed Pi's select dialog, which does not scroll, hiding lower entries; grouping keeps every dialog short. Already-picked models stay hidden.
+
 ## 0.3.1 — 2026-10-09
 
 ### Fixed

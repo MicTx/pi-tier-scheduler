@@ -543,7 +543,7 @@ describe("/ts init — catalog-driven candidate picking", () => {
         ];
       },
       getProviderAuthStatus(provider: string) {
-        return provider === "beta" ? { configured: false } : { configured: true };
+        return { configured: true };
       },
     };
   }
@@ -553,10 +553,11 @@ describe("/ts init — catalog-driven candidate picking", () => {
     const face = makeCtx([
       { select: "project" },                            // scope
       { select: ADD },                                  // brain menu: add
-      { select: "acme/big · 200k ctx · reasoning" },    // catalog pick
+      { select: "acme" },                               // provider step (two groups)
+      { select: "big · 200k ctx · reasoning" },         // model step within acme
       { select: KEEP },                                 // brain menu: done
       { select: ADD },                                  // pillar menu: add
-      { select: "Enter manually…" },                    // catalog manual fallback
+      { select: "Enter manually…" },                    // manual fallback at the provider step
       { input: " acme " },
       { input: " pillar-1 " },
       { select: KEEP },                                 // pillar menu: done

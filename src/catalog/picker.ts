@@ -1,12 +1,17 @@
 /**
- * Catalog-driven candidate picker (spec: 2026-10-09_add-catalog-driven-candidate-picker).
+ * Catalog-driven candidate picker (spec: catalog-driven-candidate-picker;
+ * 0.3.2 refinements: credential filter + two-level navigation).
  *
- * Turns Pi's machine-readable model registry into the labeled option list the
+ * Turns Pi's machine-readable model registry into the pick options the
  * configuration dialogs offer instead of free-text provider/id entry. Pure
- * module: a narrow structural registry goes in, sorted pick options come out.
- * Registry exceptions propagate to the caller — the command face catches them
- * and degrades to the pre-existing text path (fail-soft, matching the
- * snapshot discipline in snapshot.ts).
+ * module: a narrow structural registry goes in, provider-grouped pick
+ * options come out. Registry exceptions propagate to the caller — the
+ * command face catches them and degrades to the pre-existing text path
+ * (fail-soft, matching the snapshot discipline in snapshot.ts).
+ *
+ * Providers whose credentials are not configured never appear: routing
+ * filters them at request time, so offering them for configuration is
+ * noise. Manual entry remains available for pre-configuration.
  */
 import type { Api, Model } from "@earendil-works/pi-ai";
 
@@ -28,6 +33,16 @@ export interface CatalogPickOption {
   label: string;
 }
 
+/**
+ * One provider's pickable models. Grouping by provider keeps every dialog
+ * short: the first dialog lists providers, the second lists one provider's
+ * models — a flat list overflows the select dialog, which does not scroll.
+ */
+export interface CatalogPickGroup {
+  provider: string;
+  models: readonly CatalogPickOption[];
+}
+
 /** Our own virtual model never belongs in a candidate list. */
 function isOwnVirtualModel(provider: string): boolean {
   return provider === PROVIDER_NAMESPACE;
@@ -40,39 +55,36 @@ function contextLabel(contextWindow: number | undefined): string | null {
 }
 
 /**
- * Build the pick list for one dialog session: chat models only, our own
- * virtual namespace excluded, sorted by provider then id, each labeled with
- * the context window, the reasoning flag, and the credential badge so the
- * user can see eligibility before picking.
+ * Build the provider-grouped pick list for one dialog session: chat models
+ * only, own virtual namespace excluded, uncredentialed providers filtered
+ * out entirely, groups sorted by provider and models by id. Model labels
+ * carry the context window and the reasoning flag; the provider is the
+ * group's context, so it is not repeated in every label.
  */
-export function buildCatalogPickList(registry: CatalogPickerRegistry): CatalogPickOption[] {
-  const models = registry.getModelsOfType("chat");
-  const picked = models
-    .filter((model) => !isOwnVirtualModel(model.provider))
-    .map((model) => {
-      const parts: string[] = [];
-      const context = contextLabel(model.contextWindow);
-      if (context !== null) parts.push(context);
-      if (model.reasoning === true) parts.push("reasoning");
-      if (!registry.getProviderAuthStatus(model.provider).configured) parts.push("no key");
-      return {
-        ref: { provider: model.provider, id: model.id },
-        label: parts.length > 0 ? `${model.provider}/${model.id} · ${parts.join(" · ")}` : `${model.provider}/${model.id}`,
-      };
-    })
-    .sort((a, b) =>
-      a.ref.provider === b.ref.provider
-        ? a.ref.id.localeCompare(b.ref.id)
-        : a.ref.provider.localeCompare(b.ref.provider),
-    );
-  // provider/id pairs are unique inside one registry snapshot, so labels are
-  // unique by construction; assert it cheaply against future field changes.
-  const seen = new Set<string>();
-  for (const option of picked) {
-    if (seen.has(option.label)) {
-      throw new Error(`duplicate catalog pick label: ${option.label}`);
+export function buildCatalogPickGroups(registry: CatalogPickerRegistry): CatalogPickGroup[] {
+  const byProvider = new Map<string, CatalogPickOption[]>();
+  const credentialed = new Map<string, boolean>();
+  for (const model of registry.getModelsOfType("chat")) {
+    if (isOwnVirtualModel(model.provider)) continue;
+    let configured = credentialed.get(model.provider);
+    if (configured === undefined) {
+      configured = registry.getProviderAuthStatus(model.provider).configured;
+      credentialed.set(model.provider, configured);
     }
-    seen.add(option.label);
+    if (!configured) continue;
+    const parts: string[] = [];
+    const context = contextLabel(model.contextWindow);
+    if (context !== null) parts.push(context);
+    if (model.reasoning === true) parts.push("reasoning");
+    const label = parts.length > 0 ? `${model.id} · ${parts.join(" · ")}` : model.id;
+    const group = byProvider.get(model.provider) ?? [];
+    group.push({ ref: { provider: model.provider, id: model.id }, label });
+    byProvider.set(model.provider, group);
   }
-  return picked;
+  return [...byProvider.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([provider, models]) => ({
+      provider,
+      models: models.sort((a, b) => a.ref.id.localeCompare(b.ref.id)),
+    }));
 }
